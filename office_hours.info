@@ -1,4 +1,3 @@
-; $Id$ 
 name = office hours
 description = Defines an office hours field for cck
 package = CCK
