@@ -1,6 +1,6 @@
 ; $Id: office_hours.info,v 1.1.4.3 2009/08/29 08:38:21 mikl Exp $ 
 name = Office hours
-description = Defines an office hours field for CCK, allowing you to specify when a node (could be store, office, etc.) is open or closed.
+description = Defines an office hours field for CCK, allowing you to specify when a node is open or closed.
 package = CCK
 dependencies[] = date_api
 files[] = includes/office_hours_handler_filter_day.inc

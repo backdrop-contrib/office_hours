@@ -6,11 +6,10 @@
  * Creates a field and widget for inserting working or office hours per day
  */
 
- module_load_include('inc', 'office_hours', 'office_hours.elements');
- module_load_include('inc', 'office_hours', 'office_hours.theme'); 
+module_load_include('inc', 'office_hours', 'office_hours.theme');
 
 /**
- * Implementation of hook_theme().
+ * Implements  hook_theme().
  */
 function office_hours_theme() {
   $path = drupal_get_path('module', 'office_hours');
@@ -32,50 +31,48 @@ return $themes;
  
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function office_hours_form_alter(&$form, &$form_state, $form_id) {
-	
- if ($form_id == 'field_ui_field_edit_form') {
-	if($form['#field']['type'] == 'office_hours') {
-
+	if ($form_id == 'field_ui_field_edit_form') {
+    if($form['#field']['type'] == 'office_hours') {
       $description = t('14 hours blocks is the current default. see below for limiting it');
       $description .= '<br/><strong>'. t('Warning! Changing this setting after data has been created could result in the loss of data!') .'</strong>';
-        $form['field']['cardinality'] = array(
-          '#type' => 'select',
-          '#title' => t('Number of values'),
-          '#options' => drupal_map_assoc(array(14)),
-          '#default_value' => 14,
-          '#description' => $description,
-        );
+      $form['field']['cardinality'] = array(
+        '#type' => 'select',
+        '#title' => t('Number of values'),
+        '#options' => drupal_map_assoc(array(14)),
+        '#default_value' => 14,
+        '#description' => $description,
+      );
     }
   }
-  
-  if (isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form_id) {
-    foreach ($form as $key => $field) {
-	    if (is_array($field) and isset($field['#language']) and is_array($field[$field['#language']]) and isset($field[$field['#language']][0]['#type']) and $field[$field['#language']][0]['#type'] == 'office_hours') {	
-        $form[$key]['#theme'] = 'office_hours_multiple_values';
+}
+
+function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
+  foreach ($form as $key => $field) {
+    if (is_array($field) && isset($field['#language']) && is_array($field[$field['#language']]) && isset($field[$field['#language']][0]['#type']) && $field[$field['#language']][0]['#type'] == 'office_hours') {	
+      $form[$key]['#theme'] = 'office_hours_multiple_values';
 		
-		$fromArray = $field[$field['#language']];
-		$destArray = $fromArray;
+      $fromArray = $field[$field['#language']];
+      $destArray = $fromArray;
 		
-		foreach (range(0,13) as $value) {
-			$destArray[$value]['#default_value'] = array('day' => $value, 'starthours' => NULL, 'endhours' => NULL);
-		}
-		foreach (range(0,13) as $value) {
+      foreach (range(0,13) as $value) {
+        $destArray[$value]['#default_value'] = array('day' => $value, 'starthours' => NULL, 'endhours' => NULL);
+      }
+      foreach (range(0,13) as $value) {
 			  if (isset($fromArray[$value]['#default_value'])) {
-				if ($fromArray[$value]['#default_value']['day'] != $value) {
-				$day = $fromArray[$value]['#default_value']['day'];
-					$destArray[$day] = $fromArray[$value];
-					$destArray[$day]['#weight'] = $day;
-					$destArray[$day]['#delta'] = $day;
-					}
-				else $destArray[$value] = $fromArray[$value];
+          if ($fromArray[$value]['#default_value']['day'] != $value) {
+            $day = $fromArray[$value]['#default_value']['day'];
+            $destArray[$day] = $fromArray[$value];
+            $destArray[$day]['#weight'] = $day;
+            $destArray[$day]['#delta'] = $day;
+          }
+          else $destArray[$value] = $fromArray[$value];
 				}
-		}
+      }
 		$form[$key][$field['#language']] = $destArray;
 		
-      }
     }
   }
   
@@ -102,9 +99,8 @@ function office_hours_form_alter(&$form, &$form_state, $form_id) {
 	}*/
 }
  
- 
 /**
- * Implementation of hook_init().
+ * Implements hook_init().
  */
 function office_hours_init () {
     drupal_add_css(drupal_get_path('module', 'office_hours') .'/office_hours.css');
@@ -112,7 +108,7 @@ function office_hours_init () {
 }
 
 /**
- * Implementation of hook_content_is_empty().
+ * Implements hook_content_is_empty().
  */
 function office_hours_field_is_empty($item, $field) {
   if ( $item['starthours'] == '' || $item['endhours'] == '' || !isset($item['day']) )  {
@@ -122,7 +118,7 @@ function office_hours_field_is_empty($item, $field) {
 }
 
 /**
- * Implementation of hook_field_info().
+ * Implements hook_field_info().
  *
  * @return
  *   An array keyed by field type name. Each element of the array is an associative
@@ -142,7 +138,7 @@ function office_hours_field_info() {
 }
 
 /**
- * Implementation of hook_field_settings_form().
+ * Implements hook_field_settings_form().
  *
  * Handle the parameters for a field.
  */
@@ -198,10 +194,25 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
       return $form;
 }
 
+/**
+ * Implements hook_field_validate().
+ */
+function office_hours_field_settings_validate($op, &$node, $field, &$items, $teaser, $page) {
+  foreach ($items as $delta => $item) {
+    if ($field['valhrs']) {
+     if (!empty($item['starthours']) && !empty($item['endhours']) ) {
+       $error_field = $field['field_name'] .']['. $delta .'][endhours';
+         if ($item['starthours'] > $item['endhours']) {
+            form_set_error($error_field, t('Closing hours are earlier than opening hours validator'));
+         }
+       }
+    }
+  }
+}
 
 /**
-* Implements hook_field_schema($field).
-*/
+ * Implements hook_field_schema($field).
+ */
 function office_hours_field_schema($field) {  
 	switch ($field['type']) {
     case 'office_hours' :
@@ -209,45 +220,12 @@ function office_hours_field_schema($field) {
         'day' => array('type' => 'int', 'not null' => FALSE),
         'starthours' => array('type' => 'int', 'not null' => FALSE),
         'endhours' => array('type' => 'int', 'not null' => FALSE),
-      );
+    );
 	  break;
-	  }
-	  return array('columns' => $db_columns);  
+  }
+  return array('columns' => $db_columns);  
 }
 
-function office_hours_field_views_data($field) {
-       /* $data = _office_hours_views_field_views_data($field);
-        $db_info = $field['storage'];
-        $table_alias = content_views_tablename($field);
-        // Swap the filter handler.
-        $data[$table_alias][$field['field_name'] .'_day']['filter']['handler'] = 'office_hours_handler_filter_day';
-        $data[$table_alias][$field['field_name'] .'_starthours']['filter']['handler'] = 'office_hours_handler_filter_hours';
-        $data[$table_alias][$field['field_name'] .'_endhours']['filter']['handler'] = 'content_handler_handler_filter_hours';
-        return $data;*/
-}
-
-/**
- * Implementation of hook_field_validate().
- **/
- function office_hours_field_settings_validate($op, &$node, $field, &$items, $teaser, $page) {
-	   foreach ($items as $delta => $item) {
-        if ($field['valhrs']) {
-         if (!empty($item['starthours']) && !empty($item['endhours']) ) {
-           $error_field = $field['field_name'] .']['. $delta .'][endhours';
-             if ($item['starthours'] > $item['endhours']) {
-                form_set_error($error_field, t('Closing hours are earlier than opening hours validator'));
-             }
-           }
-        }
-      }
- 
- }
- 
- 
-/**
- * Implementation of hook_field_update().
- **/
- 
 function office_hours_validate($element, $form_state) {
 	/* foreach ($element as $delta => $item) {
 	  if(empty($item['starthours']) && empty($item['endhours'])) {
@@ -258,8 +236,12 @@ function office_hours_validate($element, $form_state) {
 	  form_set_value($element, $element, $form_state);*/
 }
 
-
-  /*/ function office_hours_field_update($entity_type, $entity, $field, $instance, $lang, $items) {
+ 
+/**
+ * Implements hook_field_update().
+ */
+ /*
+function office_hours_field_update($entity_type, $entity, $field, $instance, $lang, $items) {
 	$field_name = $field['field_name'];
 	echo $field_name;
   if (empty($items)) {
@@ -267,11 +249,12 @@ function office_hours_validate($element, $form_state) {
   }
 	$items = _office_hours_set_weight($items);
 	$entity->{$field['field_name']}[$lang] = $items;
-   }
-	*/
+}
+*/
+	
   
 /**
- * Implementation of hook_field_formatter_info().
+ * Implements hook_field_formatter_info().
  */
 function office_hours_field_formatter_info() {
   return array(
@@ -284,7 +267,7 @@ function office_hours_field_formatter_info() {
 }
 
 /**
- * Implementation of hook_widget_info().
+ * Implements hook_widget_info().
  */
 function office_hours_field_widget_info() {
   return array(
@@ -300,15 +283,15 @@ function office_hours_field_widget_info() {
 }
 
 /**
- * Implementation of FAPI hook_elements().
+ * Implements FAPI hook_element_info().
  */
 function office_hours_element_info() {
-module_load_include('inc', 'office_hours', 'office_hours.elements');
- return _office_hours_elements();
+  module_load_include('inc', 'office_hours', 'office_hours.elements');
+  return _office_hours_elements();
 }
 
 /**
- * Implementation of hook_widget().
+ * Implements hook_widget().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 	$element += array(
@@ -332,7 +315,7 @@ function office_hours_field_widget_error($element, $error, $form, &$form_state) 
 }
 
 /**
- * Implementation of hook_views_api().
+ * Implements hook_views_api().
  */
 function office_hours_views_api() {
   return array(
@@ -354,24 +337,6 @@ function _office_hours_arrange_day ($items) {
     endwhile;
   return $items;
 }
-
-/**
- * helper function to create hours array.
- * items are saved in 24 hours string format (i.e '18:00').
- *//* we're using date_api now
- function _office_hours_create_hours_arr($field = array(), $limit = TRUE) { 
-  $ophours['none'] = t('None');
-  $start = ($field['limitstart'] != 'none') ? $field['limitstart']: 0;
-  $end = ($field['limitend'] != 'none') ?  $field['limitend'] : 2400 ;
-  $gran = ($field['granularity'] == 0) ? 60 : $field['granularity'];
-  for ($i = $start; $i <= $end; $i+=$gran  ) {
-    if (substr($i, -2) == 60) {
-      $i += 40;
-    }
-    $ophours[$i] = ($field['hoursformat']) ? _office_hours_mil_to_tf($i) :  _office_hours_convert_to_ampm($i);
-  }
-  return $ophours;
-}*/
  
 /**
  * Helper function for conversion of clock format.
@@ -441,6 +406,18 @@ function _office_hours_set_weight($items) {
   }
   return $sorted;
 }
+
+function office_hours_field_views_data($field) {
+       /* $data = _office_hours_views_field_views_data($field);
+        $db_info = $field['storage'];
+        $table_alias = content_views_tablename($field);
+        // Swap the filter handler.
+        $data[$table_alias][$field['field_name'] .'_day']['filter']['handler'] = 'office_hours_handler_filter_day';
+        $data[$table_alias][$field['field_name'] .'_starthours']['filter']['handler'] = 'office_hours_handler_filter_hours';
+        $data[$table_alias][$field['field_name'] .'_endhours']['filter']['handler'] = 'content_handler_handler_filter_hours';
+        return $data;*/
+}
+
 
 /**
  * Adding all table field into $data in hook_views_data.

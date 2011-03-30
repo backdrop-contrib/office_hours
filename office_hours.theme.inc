@@ -39,7 +39,7 @@ function theme_office_hours_formatter_default($vars) {
   }
   
   $keys = array_keys($items);
-  if ($keys[0] != $days[$first] && in_array(t($days[$first]), $items) ) {
+  if ((!empty($keys)) && $keys[0] != $days[$first] && in_array(t($days[$first]), $items) )
    while ($keys[0] != $days[$first] && count($keys)>1):   
     $shifted = array_shift($items);
     $items[$keys[0]] = $shifted;
