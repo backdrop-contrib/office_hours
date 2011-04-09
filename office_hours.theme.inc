@@ -39,22 +39,24 @@ function theme_office_hours_formatter_default($vars) {
   }
   
   $keys = array_keys($items);
-  if ((!empty($keys)) && $keys[0] != $days[$first] && in_array(t($days[$first]), $items) )
+  if ((!empty($keys)) && $keys[0] != $days[$first] && in_array(t($days[$first]), $items) ) {
    while ($keys[0] != $days[$first] && count($keys)>1):   
     $shifted = array_shift($items);
     $items[$keys[0]] = $shifted;
     $keys = array_keys($items);
   endwhile;
   }
-  
   foreach ($items as $day => $val) {
     $strhrs = $val[0]['strhrs'];
     $endhrs = $val[0]['endhrs'];
-	if (isset($val[1])) {
-    $strhrs2 = $val[1]['strhrs'];
-    $endhrs2 = $val[1]['endhrs'];
-    $additional =  ' <span class="oh-display-hours">, '.$strhrs2.' - '.$endhrs2.'</span>';
-	} else $additional = '';
+    if (isset($val[1])) {
+      $strhrs2 = $val[1]['strhrs'];
+      $endhrs2 = $val[1]['endhrs'];
+      $additional =  ' <span class="oh-display-hours">, '.$strhrs2.' - '.$endhrs2.'</span>';
+    } 
+    else {
+      $additional = '';
+    }
     $output .= '<div class="oh-display">'.$day.': <span class="oh-display-hours">'.$strhrs.' - '.$endhrs.'</span>'.$additional.'</div>';  
   }
   return $output;     

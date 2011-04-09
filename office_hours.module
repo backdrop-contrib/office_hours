@@ -291,13 +291,13 @@ function office_hours_element_info() {
 }
 
 /**
- * Implements hook_widget().
+ * Implements hook_field_widget_form().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $items = _office_hours_arrange_items($items);
 	$element += array(
 	 '#type' => 'office_hours',
 	 '#default_value' => isset($items[$delta]['starthours']) ? $items[$delta] : NULL,
-	 '#weight' => 0,
 	 );
 	/*$element = office_hours_field_process($element, $form_state, $form);
 	foreach($element as $key=>$elem) {
@@ -322,6 +322,13 @@ function office_hours_views_api() {
     'api' => 2,
     'path' => drupal_get_path('module', 'office_hours') . '/includes',
   );
+}
+
+function _office_hours_arrange_items($items) {
+  foreach ($items as $item) {
+    $days[$item['day']] = $item;
+  }
+  return $days;
 }
 
 function _office_hours_arrange_day ($items) {
