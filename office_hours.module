@@ -145,53 +145,53 @@ function office_hours_field_info() {
 function office_hours_field_settings_form($field, $instance, $has_data) {
 	$settings = $field['settings'];
 	$form = array();
-	     $form['hoursformat'] = array(
-        '#type' => 'select',
-        '#title' => t('Hours format'),
-        '#options' => array (t('24 hrs.'), t('12 hrs')),
-        '#default_value' => isset($settings['hoursformat']) ? $settings['hoursformat'] : 0,
-        '#required' => FALSE,
-        '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
-      );
-      $form['granularity'] = array(
-        '#type' => 'select',
-        '#title' => t('granularity of time'),
-        '#options' => array ( '60' => t('Hours'), '30' => t('Half hours'), '15' => t('Quarter hours') ),
-        '#default_value' => isset($settings['granularity']) ? $settings['granularity'] : 0,
-        '#required' => FALSE,
-        '#description' => t('Allow inserting quarter hours, half hours, or only hours of the day'),
-      );
-      $form['limitstart'] = array (
-        '#type' => 'office_hours_select',
-        '#title' => t('Limit widget start hours'),
-        '#default_hours' => isset($settings['limitstart']) ? $settings['limitstart'] : '', 
-        '#granularity' => $settings['granularity'],
-        '#hoursformat' => $settings['hoursformat'],
-        '#prefix' => '<div class="office-hours-block" style="display:inline">',
-      );
-       $form['limitend'] = array(
-        '#type' => 'office_hours_select',
-        '#title' => t('Limit widget end hours'),
-        '#default_hours' => isset($settings['limitend']) ? $settings['limitend'] : '', 
-        '#granularity' => $settings['granularity'],
-        '#hoursformat' => $settings['hoursformat'],
-        '#suffix' => '</div>',
-      );
-      $form['valhrs'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Validate hours'),
-        '#required' => FALSE,
-        '#default_value' => isset($settings['valhrs']) ? $settings['valhrs'] : 0,
-        '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
-      );
-       $form['addhrs'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Display the "Add more hours" link'),
-        '#required' => FALSE,
-        '#default_value' => isset($settings['addhrs']) ? $settings['addhrs'] : 1,
-        '#description' => t('Make it possible to use 2 hour block for each day instead of one'),
-      );
-      return $form;
+	$form['hoursformat'] = array(
+	  '#type' => 'select',
+    '#title' => t('Hours format'),
+    '#options' => array (t('24 hrs.'), t('12 hrs')),
+    '#default_value' => isset($settings['hoursformat']) ? $settings['hoursformat'] : 0,
+    '#required' => FALSE,
+    '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
+  );
+  $form['granularity'] = array(
+    '#type' => 'select',
+    '#title' => t('granularity of time'),
+    '#options' => array ( '60' => t('Hours'), '30' => t('Half hours'), '15' => t('Quarter hours') ),
+    '#default_value' => isset($settings['granularity']) ? $settings['granularity'] : 0,
+    '#required' => FALSE,
+    '#description' => t('Allow inserting quarter hours, half hours, or only hours of the day'),
+  );
+  $form['limitstart'] = array (
+    '#type' => 'office_hours_select',
+    '#title' => t('Limit widget start hours'),
+    '#default_hours' => isset($settings['limitstart']) ? $settings['limitstart'] : '', 
+    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
+    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
+    '#prefix' => '<div class="office-hours-block" style="display:inline">',
+  );
+  $form['limitend'] = array(
+    '#type' => 'office_hours_select',
+    '#title' => t('Limit widget end hours'),
+    '#default_hours' => isset($settings['limitend']) ? $settings['limitend'] : '', 
+    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
+    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
+    '#suffix' => '</div>',
+  );
+  $form['valhrs'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Validate hours'),
+    '#required' => FALSE,
+    '#default_value' => isset($settings['valhrs']) ? $settings['valhrs'] : 0,
+    '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
+  );
+  $form['addhrs'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display the "Add more hours" link'),
+    '#required' => FALSE,
+    '#default_value' => isset($settings['addhrs']) ? $settings['addhrs'] : 1,
+    '#description' => t('Make it possible to use 2 hour block for each day instead of one'),
+  );
+  return $form;
 }
 
 /**
