@@ -325,6 +325,7 @@ function office_hours_views_api() {
 }
 
 function _office_hours_arrange_items($items) {
+  $days = array();
   foreach ($items as $item) {
     $days[$item['day']] = $item;
   }
