@@ -22,46 +22,62 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
  * Theme function for 'default' text field formatter.
  */
 function theme_office_hours_formatter_default($vars) {
+  $output = '';
   $items = array();
-  $element = $vars['element'];
   $first = variable_get('date_first_day', 0); 
   $field = field_info_field($vars['field']['field_name']);
-  $output = '';
-  $days = array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'), 3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday') );
+  $element = $vars['element'];
+  $weekdays = array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'), 3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday') );
+
   foreach (element_children($element) as $key => $arraykey) {
     $item = $element[$arraykey];
-    $day = $days[(int)($element[$arraykey]['day']/2)];
+    $day = (int)($item['day'] / 2); // Keys are 0+1 for sunday, 2+3 for monday, etc. Each day may have normal hours + extra hours.
     if (isset($day)) {
-      $endhrs = _office_hours_mil_to_tf(check_plain($item['endhours']));
       $strhrs = _office_hours_mil_to_tf(check_plain($item['starthours']));  
+      $endhrs = _office_hours_mil_to_tf(check_plain($item['endhours']));
       if ($field['settings']['hoursformat']) {
-        $endhrs = _office_hours_convert_to_ampm($endhrs);
         $strhrs = _office_hours_convert_to_ampm($strhrs);
+        $endhrs = _office_hours_convert_to_ampm($endhrs);
       }
       $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; //we're aggregating hours for days together.
     }   
   }
 
-  $keys = array_keys($items);
-  if ((!empty($keys)) && $keys[0] != $days[$first] && in_array(t($days[$first]), $items) ) {
-   while ($keys[0] != $days[$first] && count($keys)>1):   
-    $shifted = array_shift($items);
-    $items[$keys[0]] = $shifted;
-    $keys = array_keys($items);
-  endwhile;
-  }
-  foreach ($items as $day => $val) {
-    $strhrs = $val[0]['strhrs'];
-    $endhrs = $val[0]['endhrs'];
-    if (isset($val[1])) {
-      $strhrs2 = $val[1]['strhrs'];
-      $endhrs2 = $val[1]['endhrs'];
-      $additional = ' <span class="oh-display-hours">, ' . $strhrs2 . ' - ' . $endhrs2 . '</span>';
-    } 
-    else {
-      $additional = '';
+  // add the closed days again, to 1) sort by first_day_of_week and 2) toggle show on/off
+  foreach ($weekdays as $key => $day) {
+    if (!array_key_exists($key, $items)) {
+        $items[$key][]= array('closed' => 'closed'); //silly, but we need this as an array because we can't use a string offset later
     }
-    $output .= '<div class="oh-display">' . $day . ': <span class="oh-display-hours">' . $strhrs . ' - ' . $endhrs . '</span>' . $additional . '</div>';  
+  }
+  ksort($items);
+  $items = date_week_days_ordered($items);
+  $weekdays = date_week_days_ordered($weekdays);
+
+  foreach ($items as $day => $hours) {
+    $dayname = $weekdays[$day];
+    $closed = '';
+    $regular = '';
+    $additional = '';
+    if ( isset($hours[0]['closed']) ) {
+      if ( !empty($field['settings']['showclosed']) ) { // don't output unnecessary fields
+        $closed = '<span class="oh-display-hours">' . t('Closed') . '</span>';  
+      }
+    }
+    else {
+      $strhrs1 = $hours[0]['strhrs'];
+      $endhrs1 = $hours[0]['endhrs'];
+      $regular    = '<span class="oh-display-hours">' . $strhrs1 . ' - ' . $endhrs1 . '</span>';
+      if (isset($hours[1])) {
+        $strhrs2 = $hours[1]['strhrs'];
+        $endhrs2 = $hours[1]['endhrs'];
+        $additional = ' , <span class="oh-display-hours">' . $strhrs2 . ' - ' . $endhrs2 . '</span>';
+      } 
+    }
+
+    $output_line = $closed . $regular . $additional ;  
+    if (!empty($output_line)) {
+      $output .= '<div class="oh-display">' . $dayname . ': ' . $output_line . '</div>';  
+    }
   }
   return $output;
 }
@@ -107,7 +123,7 @@ function theme_office_hours_multiple_values($vars) {
          $items[] = &$element[$key];
       }
     }
-// dpm($items);
+
     $items = _office_hours_arrange_day($items); //this calls the function that arranges the first day of the week.
     // Add the items as table rows.
     foreach ($items as $key => $item) {

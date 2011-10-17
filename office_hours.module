@@ -9,7 +9,7 @@
 module_load_include('inc', 'office_hours', 'office_hours.theme');
 
 /**
- * Implements  hook_theme().
+ * Implements hook_theme().
  */
 function office_hours_theme() {
   $path = drupal_get_path('module', 'office_hours');
@@ -162,7 +162,7 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
   );
   $form['granularity'] = array(
     '#type' => 'select',
-    '#title' => t('granularity of time'),
+    '#title' => t('Granularity of time'),
     '#options' => array( '60' => t('hours'), '30' => t('half hours'), '15' => t('quarter hours'), '5' => t('5 minute intervals'), '1' => t('minutes') ),
     '#default_value' => isset($settings['granularity']) ? $settings['granularity'] : 0,
     '#required' => FALSE,
@@ -196,7 +196,14 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#title' => t('Display the "Add more hours" link'),
     '#required' => FALSE,
     '#default_value' => isset($settings['addhrs']) ? $settings['addhrs'] : 1,
-    '#description' => t('Make it possible to use 2 hour block for each day instead of one'),
+    '#description' => t('Make it possible to use 2 hour block for each day instead of one.'),
+  );
+  $form['showclosed'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show empty days'),
+    '#required' => FALSE,
+    '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : 0,
+    '#description' => t('Show empty days on the node.'),
   );
   return $form;
 }
