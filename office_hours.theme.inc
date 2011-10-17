@@ -41,7 +41,7 @@ function theme_office_hours_formatter_default($vars) {
       $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; //we're aggregating hours for days together.
     }   
   }
-  
+
   $keys = array_keys($items);
   if ((!empty($keys)) && $keys[0] != $days[$first] && in_array(t($days[$first]), $items) ) {
    while ($keys[0] != $days[$first] && count($keys)>1):   
@@ -94,7 +94,7 @@ function theme_office_hours_multiple_values($vars) {
     $header = array(
       array(
         'data' => t('!title: !required', array('!title' => $element['#title'], '!required' => $required)),
-        'colspan' => 2
+        'colspan' => 2,
       ),
     );
     $rows = array();

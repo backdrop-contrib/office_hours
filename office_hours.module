@@ -163,10 +163,10 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
   $form['granularity'] = array(
     '#type' => 'select',
     '#title' => t('granularity of time'),
-    '#options' => array( '60' => t('Hours'), '30' => t('Half hours'), '15' => t('Quarter hours') ),
+    '#options' => array( '60' => t('hours'), '30' => t('half hours'), '15' => t('quarter hours'), '5' => t('5 minute intervals'), '1' => t('minutes') ),
     '#default_value' => isset($settings['granularity']) ? $settings['granularity'] : 0,
     '#required' => FALSE,
-    '#description' => t('Allow inserting quarter hours, half hours, or only hours of the day'),
+    '#description' => t('Restrict the input to fixed fractions of an hour.'),
   );
   $form['limitstart'] = array(
     '#type' => 'office_hours_select',
