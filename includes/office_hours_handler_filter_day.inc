@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Implements Views integration: day filter 
+ */
 // $Id: office_hours_handler_filter_day.inc,v 1.1.2.1 2009/03/07 22:13:50 ozeuss Exp $
 
 class office_hours_handler_filter_day extends content_handler_filter_many_to_one {
@@ -9,7 +13,7 @@ class office_hours_handler_filter_day extends content_handler_filter_many_to_one
   }
   
   function get_value_options() {
-    $this->value_options = array( t('Sunday'),t('Monday'),t('Tuesday'), t('Wednesday'),t('Thursday'),t('Friday'),t('Saturday') );
+    $this->value_options = array( t('Sunday'), t('Monday'), t('Tuesday'),  t('Wednesday'), t('Thursday'), t('Friday'), t('Saturday') );
   }
   
   function option_definition() {
@@ -52,7 +56,7 @@ class office_hours_handler_filter_day extends content_handler_filter_many_to_one
         if (!empty($this->options['expose']['optional']) && (empty($default_value) || !empty($this->options['expose']['reduce']))) {
           $default_value = 'All';
         }
-        else if (empty($default_value)) {
+        elseif (empty($default_value)) {
           $keys = array_keys($options);
           $default_value = array_shift($keys);
         }
