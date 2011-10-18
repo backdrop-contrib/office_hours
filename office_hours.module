@@ -6,6 +6,7 @@
  */
 
 module_load_include('inc', 'office_hours', 'office_hours.theme');
+module_load_include('inc', 'office_hours', 'office_hours.feeds'); // To be removed after fixing Feeds issue 1224836
 
 /**
  * Implements hook_theme().
