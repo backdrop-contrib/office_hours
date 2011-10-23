@@ -1,5 +1,4 @@
 <?php
-// $Id: office_hours.module,v 1.1.2.1.2.12 2009/11/08 08:35:20 ozeuss Exp $
 /**
  * @file
  * Creates a field and widget for inserting working or office hours per day
@@ -28,7 +27,7 @@ function office_hours_theme() {
   );
 return $themes;
 }
- 
+
 /**
  * Implements hook_form_alter().
  */
@@ -50,9 +49,9 @@ function office_hours_form_alter(&$form, &$form_state, $form_id) {
 
 function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
   foreach ($form as $key => $field) {
-    if (is_array($field) && isset($field['#language']) 
-    && is_array($field[$field['#language']]) 
-    && isset($field[$field['#language']][0]['#type']) 
+    if (is_array($field) && isset($field['#language'])
+    && is_array($field[$field['#language']])
+    && isset($field[$field['#language']][0]['#type'])
     && $field[$field['#language']][0]['#type'] == 'office_hours') {
       $form[$key]['#theme'] = 'office_hours_multiple_values';
 
@@ -78,34 +77,34 @@ function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
       $form[$key][$field['#language']] = $destArray;
     }
   }
-  
+
 /*
-if (is_object($field)) {
-$fromArray = get_object_vars($field);
-$lang = $fromArray['language'];
-echo $lang;
-if (isset($fromArray['field_hours'])) {
-$destArray = $fromArray['field_hours'];
-foreach (range(0, 13) as $value) {
-$destArray[$lang][$value] = array('day' => $value, 'starthours' => NULL, 'endhours' => NULL);
-}
-foreach (range(0, 13) as $value) {
-  if (isset($fromArray['field_hours'][$lang][$value])) { 
-    $day = $fromArray['field_hours'][$lang][$value]['day'];
-    if ($day != $value) {
-      $destArray[$lang][$day] = $fromArray['field_hours'][$lang][$value];
-    }
-    else {
-      $destArray[$lang][$value] = $fromArray['field_hours'][$lang][$value];
+  if (is_object($field)) {
+    $fromArray = get_object_vars($field);
+    $lang = $fromArray['language'];
+    echo $lang;
+    if (isset($fromArray['field_hours'])) {
+      $destArray = $fromArray['field_hours'];
+      foreach (range(0, 13) as $value) {
+        $destArray[$lang][$value] = array('day' => $value, 'starthours' => NULL, 'endhours' => NULL);
+      }
+      foreach (range(0, 13) as $value) {
+        if (isset($fromArray['field_hours'][$lang][$value])) {
+          $day = $fromArray['field_hours'][$lang][$value]['day'];
+          if ($day != $value) {
+            $destArray[$lang][$day] = $fromArray['field_hours'][$lang][$value];
+          }
+          else {
+            $destArray[$lang][$value] = $fromArray['field_hours'][$lang][$value];
+          }
+        }
+      }
+      $field->field_hours = $destArray;
     }
   }
-}
-$field->field_hours = $destArray;
-}
-}
 */
 }
- 
+
 /**
  * Implements hook_init().
  */
@@ -118,7 +117,7 @@ function office_hours_init() {
  * Implements hook_content_is_empty().
  */
 function office_hours_field_is_empty($item, $field) {
-  if ( $item['starthours'] == '' || $item['endhours'] == '' || !isset($item['day']) )  {
+  if ( $item['starthours'] == '' || $item['endhours'] == '' || !isset($item['day']) ) {
     return TRUE;
   }
   return FALSE;
@@ -139,7 +138,7 @@ function office_hours_field_info() {
       'description' => t('Store office or opening hours in the database.'),
       'instance_settings' => array('hoursformat', 'granularity', 'limitstart', 'limitend', 'valhrs', 'addhrs'),
       'default_widget' => 'office_hours',
-      'default_formatter' => 'office_hours',  
+      'default_formatter' => 'office_hours',
      ),
   );
 }
@@ -227,7 +226,7 @@ function office_hours_field_settings_validate($op, &$node, $field, &$items, $tea
 /**
  * Implements hook_field_schema($field).
  */
-function office_hours_field_schema($field) {  
+function office_hours_field_schema($field) {
   switch ($field['type']) {
     case 'office_hours':
       $db_columns = array(
@@ -237,7 +236,7 @@ function office_hours_field_schema($field) {
       );
     break;
   }
-  return array('columns' => $db_columns);  
+  return array('columns' => $db_columns);
 }
 
 function office_hours_validate($element, $form_state) {
@@ -245,7 +244,7 @@ function office_hours_validate($element, $form_state) {
   foreach ($element as $delta => $item) {
     if (empty($item['starthours']) && empty($item['endhours'])) {
       $item['starthours'] = NULL;
-      $item['endhours'] = NULL; 
+      $item['endhours'] = NULL;
     }
   }
   form_set_value($element, $element, $form_state);
@@ -350,7 +349,7 @@ function _office_hours_arrange_items($items) {
 }
 
 function _office_hours_arrange_day($items) {
-  $first = variable_get('date_first_day', 0); 
+  $first = variable_get('date_first_day', 0);
     while ($first > 0) :
       $shifted = array_shift($items);
       $items[] = $shifted;
@@ -362,7 +361,7 @@ function _office_hours_arrange_day($items) {
     endwhile;
   return $items;
 }
- 
+
 /**
  * Helper function for conversion of clock format.
  */
@@ -412,7 +411,7 @@ function _office_hours_set_weight($items) {
   foreach ($items as $key => $item) {
     if (!is_null($item['day'])) {
       $sortkey= (int)$item['day'];
-      $sortkey = $sortkey * 2;        
+      $sortkey = $sortkey * 2;
       if (!empty($sorted[$sortkey]) && is_array($sorted[$sortkey])) {
         $sorted[$sortkey+1] = $item;
       }
@@ -424,7 +423,7 @@ function _office_hours_set_weight($items) {
   //now fill the empty spaces with null values
   foreach (range(0, 13) as $value) {
     if (empty($sorted[$value]) || !is_array($sorted[$value])) {
-      $day = ($value == 0) ? 0 : (($value & 1) ? ($value-1)/2 : $value/2);
+      $day = ($value == 0) ? 0 : (($value & 1) ? ( $value-1)/2 : $value/2 );
       $sorted[$value] = array('starthours' => 0000, 'endhours' => 0000, 'day' => (int)$day);
     }
   }
