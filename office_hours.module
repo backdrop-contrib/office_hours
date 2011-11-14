@@ -325,6 +325,8 @@ function office_hours_views_api() {
 }
 
 function _office_hours_arrange_items($items) {
+  dpm($items);
+  $days = array();
   foreach ($items as $item) {
     $days[$item['day']] = $item;
   }
@@ -332,6 +334,7 @@ function _office_hours_arrange_items($items) {
 }
 
 function _office_hours_arrange_day ($items) {
+  dpm('date_first_day');
   $first = variable_get('date_first_day',0); 
     while ($first > 0) :
       $shifted = array_shift($items);
