@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Implements Views integration: hours filter 
+ */
 // $Id: office_hours_handler_filter_hours.inc,v 1.1.2.1 2009/03/07 22:13:50 ozeuss Exp $
 
 class office_hours_handler_filter_hours extends views_handler_filter_numeric {
@@ -74,12 +78,13 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
       ),
     );
     return $operators;
-  }*/
- 
-  /**
-   * Provide a list of all the numeric operators
-   */
- /* function operator_options($which = 'title') {
+  }
+*/
+
+/**
+ * Provide a list of all the numeric operators
+ */
+/* function operator_options($which = 'title') {
     $options = array();
     foreach ($this->operators() as $id => $info) {
       $options[$id] = $info[$which];
@@ -97,14 +102,15 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
     }
 
     return $options;
-  }*/
-  
-  /**
-   * Provide the form
-   */
-  function value_form(&$form, &$form_state) {
+  }
+*/
+
+/**
+  * Provide the form
+  */
+function value_form(&$form, &$form_state) {
     $form['value']['#tree'] = TRUE;
-		 $opt = _create_hours_arr($field, FALSE);
+    $opt = _create_hours_arr($field, FALSE);
     // We have to make some choices when creating this as an exposed
     // filter form. For example, if the operator is locked and thus
     // not rendered, we can't render dependencies; instead we only
@@ -125,7 +131,7 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
         $source = 'edit-' . drupal_clean_css_identifier($this->options['expose']['operator']);
       }
     }
-		
+
    if ($which == 'all') {
       $form['value']['value'] = array(
         '#type' => 'select',
@@ -140,7 +146,7 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
         $form_state['input'][$identifier]['value'] = $this->value['value'];
       }
    }
-    else if ($which == 'value') {
+    elseif ($which == 'value') {
       // When exposed we drop the value-value and just do value if
       // the operator is locked.
       $form['value'] = array(

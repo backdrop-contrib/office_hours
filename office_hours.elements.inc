@@ -9,31 +9,31 @@
 /**
  * Implementation of hook_elements().
  */
- 
+
 function _office_hours_elements() {
-return array(
+  return array(
     'office_hours' => array(
       '#input' => TRUE,
       '#tree' => TRUE,
       '#columns' => array('day', 'starthours', 'endhours'),
       '#process' => array('office_hours_field_process'),
-	  '#element_validate' => array('office_hours_validate'),
-	  '#theme' => 'office_hours',
+      '#element_validate' => array('office_hours_validate'),
+      '#theme' => 'office_hours',
     ),
     'office_hours_select' => array(
       '#input' => TRUE,
       '#tree' => TRUE,
       '#process' => array('office_hours_select_process'),
       '#element_validate' => array('office_hours_select_validate'),
-	  '#theme' => 'office_hours_select',
+      '#theme' => 'office_hours_select',
     ),
   );
 }
 
 /*
 function office_hours_field_preprocess($vars) {
-  }
- */
+}
+*/
 
 /**
  * Process an individual element.
@@ -44,7 +44,7 @@ function office_hours_field_preprocess($vars) {
  * D7 : in $form_state['field'][$element['#field_name']][$element['#language']]['field']
  */
 function office_hours_field_process($element, &$form_state, $form) {
-  drupal_add_js(drupal_get_path('module', 'office_hours') ."/office_hours.js", 'file');
+  drupal_add_js(drupal_get_path('module', 'office_hours') . "/office_hours.js", 'file');
   // test if the element is well placed in the array, switch element if not;
  /* if (is_array($element['#value'])) {
 	if (isset($element['#value']['day']) and  $element['#value']['day'] != $element['#weight']) {
@@ -59,36 +59,33 @@ function office_hours_field_process($element, &$form_state, $form) {
 	}}*/
   $day = $element['#weight'];
   $field = $form_state['field'][$element['#field_name']][$element['#language']]['field'];
-  $day =  ($day == 0) ? 0 :(($day & 1) ? ($day-1)/2 : $day/2);
+  $day = ($day == 0) ? 0 : (($day & 1) ? ($day-1)/2 : $day/2);
   $field_day = $element['#columns'][0];
   $field_strhrs = $element['#columns'][1];
-  $field_endhrs = $element['#columns'][2];  
+  $field_endhrs = $element['#columns'][2];
   $days = date_week_days_untranslated();
   if (!($element['#weight'] & 1)) { //first cell
-    $element['#prefix'] = '<div class="office-hours-block"><span class="day">'.t($days[$day]).'</span>';
+    $element['#prefix'] = '<div class="office-hours-block"><div class="dayname">' . $days[$day] . '</div>';
   }
   elseif ($field['settings']['addhrs']) {  // second cell, we're supposed to show the 'add hours link'
-    $link = l(t('Add more hours'),'',array('attributes' => array('class'=>'oh-add-more-link'))).'<div class="office-hours-block" style="display:none;">'.t('And');
-    $element['#prefix'] = isset($element['#value'][$field_strhrs]) ? '<div class="office-hours-block">'.t('And') : $link;
+    $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link'))) . '<div class="office-hours-block" style = "display:none;">' . t('And');
+    $element['#prefix'] = isset($element['#value'][$field_strhrs]) ? '<div class="office-hours-block">' . t('And') : $link;
   }
   else { //this is the second cell and were not showing it- better clear it (in case a value was entered before).
     $element['#prefix'] = "<div class='oh-hide'>";
     $element['#value'][$field_strhrs] = '';
   }
-  
-  $element['#suffix'] = '</div>';   
-  
+  $element['#suffix'] = '</div>';
   $element[$field_day] = array(
     '#type' => 'value',
     '#value' => $element['#weight'],
- ); 
+  );
   $element[$field_strhrs] = array(
     '#type' => 'office_hours_select',
     '#prefix' => t(' from'),
     '#default_hours' => isset($element['#value'][$field_strhrs]) ? $element['#value'][$field_strhrs] : '' ,
     '#granularity' => $field['settings']['granularity'],
     '#hoursformat' => $field['settings']['hoursformat'],
-    
   );
   $element[$field_endhrs] = array(
     '#type' => 'office_hours_select',
@@ -97,7 +94,9 @@ function office_hours_field_process($element, &$form_state, $form) {
     '#granularity' => $field['settings']['granularity'],
     '#hoursformat' => $field['settings']['hoursformat'],
   );
+
   $form_state['field'][$element['#field_name']][$element['#language']]['field']  = $field;
+
   return $element;
 }
 
@@ -109,11 +108,11 @@ function office_hours_select_process($element, &$form_state, $form) {
   $defhr = '';
   $defmin = '';
   if (is_numeric($element['#default_hours'])) {
-    $hour =  _office_hours_mil_to_tf($element['#default_hours']);
-    list($defhr, $defmin) = explode(":",$hour);
+    $hour = _office_hours_mil_to_tf($element['#default_hours']);
+    list($defhr, $defmin) = explode(":", $hour);
     if ($element['#hoursformat']) {
       if ($defhr >= 12) {
-        $defhr -= ($defhr != 12) ? 12 : 0;    
+        $defhr -= ($defhr != 12) ? 12 : 0;
         $ampm = 'pm';
       }
       elseif ($defhr == 0) {
@@ -127,7 +126,7 @@ function office_hours_select_process($element, &$form_state, $form) {
   
   $hours = ($element['#hoursformat'] == 1) ? date_hours('g') : date_hours('H');
   $minutes = date_minutes('i', FALSE, $element['#granularity']);
- 
+
   $element['hours'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($hours),
@@ -141,13 +140,12 @@ function office_hours_select_process($element, &$form_state, $form) {
   );
   if ($element['#hoursformat'] == 1) {
     $element['ampm'] = array(
-    '#type' => 'select',
-    '#options' => date_ampm(),
-    '#default_value' => $ampm,
-  );   
+      '#type' => 'select',
+      '#options' => date_ampm(),
+      '#default_value' => $ampm,
+    );
   }
   return $element;
-  
 }
 
 /**
@@ -163,7 +161,7 @@ function office_hours_select_validate($element, &$form_state) {
     if ($element['ampm']['#value'] == 'am' && $hour == 12) $hour = '00';
   }
   if ($hour != '' && $minutes != '') {
-    form_set_value($element, (string)$hour.$minutes, $form_state);
+    form_set_value($element, (string)$hour . $minutes, $form_state);
   }
   else {
      form_set_value($element, '', $form_state);
