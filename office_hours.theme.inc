@@ -99,60 +99,66 @@ function theme_office_hours_select($vars) {
  * Theme the hour table form
  *
  */
-function theme_office_hours_multiple_values($vars) {
- $element = $vars['element'];
- $output = '';
- if (isset($element['#cardinality']) and  $element['#cardinality'] >= 1) {
-    $table_id = $element['#field_name'] . '_values';
+function office_hours_field_multiple_value_form($variables) {
+  $element = $variables['element'];
+  $output = '';
+
+  if ($element['#cardinality'] > 1 || $element['#cardinality'] == FIELD_CARDINALITY_UNLIMITED) {
+    $table_id = drupal_html_id($element['#field_name'] . '_values');
     $order_class = $element['#field_name'] . '-delta-order';
-    $required = !empty($element['#required']) ? '<span class="form-required" title="' . t('This field is required.') . '">*</span>' : '';
+    $required = !empty($element['#required']) ? '<span class="form-required" title="' . t('This field is required. ') . '">*</span>' : '';
 
     $header = array(
       array(
-        'data' => t('!title: !required', array('!title' => $element['#title'], '!required' => $required)),
+        'data' => '<label>' . t('!title: !required', array('!title' => $element['#title'], '!required' => $required)) . "</label>",
         'colspan' => 2,
+        'class' => array('field-label'),
       ),
+      t('Order'),
     );
     $rows = array();
-
+    $items = array();
     // Sort items according to '_weight' (needed when the form comes back after
     // preview or failed validation)
-    $items = array();
-    foreach (element_children($element) as $key => $value) {
-      if ($key !== $element['#field_name'] . '_add_more') {
-         $items[] = &$element[$key];
+    foreach (element_children($element) as $key) {
+      if ($key === 'add_more') {
+        $add_more_button = &$element[$key];
+      }
+      else {
+        $items[] = &$element[$key];
       }
     }
+    usort($items, '_field_sort_items_value_helper');
 
     $items = _office_hours_arrange_day($items); //this calls the function that arranges the first day of the week.
     // Add the items as table rows.
     foreach ($items as $key => $item) {
-      //$item['#type'] = 'office_hours';
+      $item['_weight']['#attributes']['class'] = array($order_class);
       $delta_element = drupal_render($item['_weight']);
-      if (!($key % 2)) { //this is an even row, start a new row array_keys
-        $cells = array(
-           drupal_render($item),
-        );
-     }
-      else { //this is an odd row
-        $cells[] = drupal_render($item);  //we've add the second cell;
-        $rows[] = array(
-          'data' => $cells,
-        );
-      }
+      $cells = array(
+        array('data' => '', 'class' => array('field-multiple-drag')),
+        drupal_render($item),
+        array('data' => $delta_element, 'class' => array('delta-order')),
+      );
+      $rows[] = array(
+        'data' => $cells,
+        //'class' => array('draggable'),
+      );
     }
 
-    $output .= theme('table', array('header' => $header, 'rows' => $rows, 'id' => $table_id, 'class' => 'office_hours_table content-multiple-table'));
+    $output = '<div class="form-item">';
+    $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => $table_id, 'class' => array('field-multiple-table'))));
     $output .= $element['#description'] ? '<div class="description">' . $element['#description'] . '</div>' : '';
-  //  $output .= drupal_render($element[$element['#field_name'] .'_add_more']);
+    $output .= '<div class="clearfix">' . drupal_render($add_more_button) . '</div>';
+    $output .= '</div>';
 
-  //  drupal_add_tabledrag($table_id, 'order', 'sibling', $order_class);
+    drupal_add_tabledrag($table_id, 'order', 'sibling', $order_class);
   }
   else {
     foreach (element_children($element) as $key => $value) {
-      $output .= theme_office_hours_multiple_values(array('element' => $element[$value]));
+      //$output .= office_hours_field_multiple_value_form(array('element' => $element[$value]));
+      $output .= drupal_render($element[$key]);
     }
   }
-
   return $output;
 }

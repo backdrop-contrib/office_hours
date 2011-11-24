@@ -10,22 +10,24 @@ module_load_include('inc', 'office_hours', 'office_hours.feeds'); // To be remov
 /**
  * Implements hook_theme().
  */
-function office_hours_theme() {
-  $path = drupal_get_path('module', 'office_hours');
+function office_hours_theme ($existing, $type, $theme, $path) {
   module_load_include('inc', 'office_hours', 'office_hours.theme');
 
   $base = array(
     'file' => 'office_hours.theme.inc',
     'path' => "$path",
   );
-
   $themes = array(
     'office_hours_formatter_default' => $base + array('render element' => 'element'),
     'office_hours' => $base + array('render element' => 'element'),
-    'office_hours_multiple_values' => $base + array('render element' => 'element'),
+    'field_multiple_value_form' => $base + array('render element' => 'element'),
     'office_hours_select' => $base + array('render element' => 'element'),
   );
 return $themes;
+}
+
+function office_hours_theme_registry_alter(&$theme_registry) {
+  $theme_registry['field_multiple_value_form']['function'] = 'office_hours_field_multiple_value_form';
 }
 
 /**
