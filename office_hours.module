@@ -275,32 +275,18 @@ function office_hours_field_update($entity_type, $entity, $field, $instance, $la
 function office_hours_field_formatter_info() {
   return array(
     'office_hours' => array(
-      'label' => 'Office hours - tabular',
+      'label' => 'Office hours',
       'field types' =>  array('office_hours_formatter_default', 'office_hours', 'office_hours_multiple_values', 'office_hours_select'),
       'multiple values' => FIELD_BEHAVIOR_DEFAULT,
       'settings' => array(
         'daysformat' => 'long',
 //        'hoursformat' => '12'/'24'/'HH:mm',
         'compress' => FALSE,
+        'grouped' => FALSE,
         'showclosed' => FALSE,
         'closedformat' => 'Closed',   // The html-string for closed/empty days.
-        'separator_days' => '',
-        'separator_day_hours' => ': ',
-        'separator_hours_hours' => '-',
-        'separator_more_hours' => ', ',
-      ),
-    ),
-    'office_hours_inline' => array(
-      'label' => t('Office hours - inline (e.g. Google Places)'),
-      'field types' => array('office_hours', ),
-      'multiple values' => FIELD_BEHAVIOR_DEFAULT,
-      'settings' => array(
-        'daysformat' => 'long',
-//        'hoursformat' => '12'/'24'/'HH:mm',
-        'compress' => FALSE,
-        'showclosed' => FALSE,
-        'closedformat' => 'Closed',   // The html-string for closed/empty days.
-        'separator_days' => ', ',
+        'separator_days' => '<br>',
+        'separator_grouped_days' => ' - ',
         'separator_day_hours' => ': ',
         'separator_hours_hours' => '-',
         'separator_more_hours' => ', ',
@@ -347,7 +333,15 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
       '#title' => t('Compress Hours + More hours into one set'),
       '#type' => 'checkbox',
       '#default_value' => isset($settings['compress']) ? $settings['compress'] : FALSE,
-      '#description' => t('Even if more hours is allowed, you might want to show a compressed form. E.g,  7:00-12:00, 13:30-19:00 becomes 7:00-19:00.'),
+      '#description' => t('Even if more hours is allowed, you might want to show a compressed form. E.g.,  7:00-12:00, 13:30-19:00 becomes 7:00-19:00.'),
+      '#required' => FALSE,
+    );
+
+    $form['grouped'] = array(
+      '#title' => t('Group consecutive days with same hours into one set'),
+      '#type' => 'checkbox',
+      '#default_value' => isset($settings['grouped']) ? $settings['grouped'] : FALSE,
+      '#description' => t('E.g., Mon: 7:00-19:00; Tue: 7:00-19:00 becomes Mon-Tue: 7:00-19:00'),
       '#required' => FALSE,
     );
 
@@ -373,7 +367,13 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
       '#type' => 'textfield',
       '#size' => 10,
       '#default_value' => isset($settings['separator_days']) ? $settings['separator_days'] : ', ',
-      '#description' => t('This separator will be placed between the days.'),
+      '#description' => t('This separator will be placed between the days. Use &#39&ltbr&gt&#39 to show each day on a new line.'),
+    );
+    $form['separator_grouped_days'] = array(
+      '#type' => 'textfield',
+      '#size' => 10,
+      '#default_value' => isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ',
+      '#description' => t('This separator will be placed between the labels of grouped days.'),
     );
     $form['separator_day_hours'] = array(
       '#type' => 'textfield',

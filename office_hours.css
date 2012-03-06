@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+.oh-display-closed {
+  font-style: italic;
+}
+
 .office-hours-block .form-item label {
   display:inline;
 }

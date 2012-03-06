@@ -34,7 +34,9 @@ function theme_office_hours_formatter_default($vars) {
   $display = $vars['display'];
   $settings = $vars['display']['settings'];
   $formatter = $vars['display']['type'];
+  $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
 
+  // Get the label per weekday.
   switch ($settings['daysformat']) {
     case 'long':
       $weekdays = date_week_days(TRUE);
@@ -51,7 +53,7 @@ function theme_office_hours_formatter_default($vars) {
       break;
   }
 
-  // Format the 'hours'.
+  // Format the 'hours', e.g. 0900 -> 09:00.
   foreach (element_children($element) as $key => $arraykey) {
     $item = $element[$arraykey];
     $day = (int)($item['day'] / 2); // Keys are 0+1 for sunday, 2+3 for monday, etc. Each day may have normal hours + extra hours.
@@ -63,14 +65,36 @@ function theme_office_hours_formatter_default($vars) {
         $strhrs = _office_hours_convert_to_ampm($strhrs);
         $endhrs = _office_hours_convert_to_ampm($endhrs);
       }
+
       $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; // We're aggregating hours for days together.
+      $items[$day]['label'] = $weekdays[$day];
+      $max_label_length = max( $max_label_length, strlen($items[$day]['label'])); 
+
+      // Add group_id to group days with equal hours.
+      if ($settings['grouped']) {
+        $group_id = "$strhrs::$endhrs";
+        if (!isset ($items[$day]['group_id'])) {
+          $items[$day]['group_id'] = $group_id;
+        }
+        else { // more hours info.
+          $items[$day]['group_id'] .= '-'. $group_id;
+        }
+      }
     }
   }
 
   // add the closed days again, to 1) sort by first_day_of_week and 2) toggle show on/off
-  foreach ($weekdays as $key => $day) {
-    if (!array_key_exists($key, $items)) {
-        $items[$key][]= array('closed' => 'closed'); //silly, but we need this as an array because we can't use a string offset later
+  foreach ($weekdays as $day => $label) {
+    if (!array_key_exists($day, $items)) {
+      $items[$day][]= array('closed' => 'closed'); //silly, but we need this as an array because we can't use a string offset later
+      $items[$day]['label'] = $weekdays[$day];
+      $max_label_length = max($max_label_length, strlen($items[$day]['label'])); 
+
+      // Add group_id for closed days
+      if ($settings['grouped']) {
+        $group_id = 'closed';
+        $items[$day]['group_id'] = $group_id;
+      }
     }
   }
 
@@ -88,6 +112,28 @@ function theme_office_hours_formatter_default($vars) {
       break;
   }
 
+  // Change label for grouped days.
+  if ($settings['grouped']) {
+    $group_id = '';
+    $settings['separator_grouped_days'] = isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ';
+
+    foreach ($items as $day => $hours) {
+      if ($group_id != $hours['group_id']) {
+        // new group, save label of first day.
+        $group_id = $hours['group_id'];
+        $group_from_label = $hours['label'];
+      }
+      else {
+        // second, third day of group: adjust the label of this group to e.g. 'mon-wed'
+        $items[$day]['label'] = $group_from_label . $settings['separator_grouped_days'] . $hours['label'];
+        $max_label_length = max($max_label_length, strlen($items[$day]['label'])); 
+        // delete previous item of this group, so it will not be shown.
+        unset ($items[$day-1]);
+      }
+    }
+  }
+
+  // Finally, generate the formatter output.
   $output = '';
   $values = array();
   foreach ($items as $day => $hours) {
@@ -120,39 +166,25 @@ function theme_office_hours_formatter_default($vars) {
       $regular = $strhrs1 . $settings['separator_hours_hours'] . $endhrs1;
     }
 
-    $output_dayname = $weekdays[$day];
-
-    switch ($formatter) {
-      case 'office_hours':
-        $maxdaylen = max( 3, max(array_map('strlen', $weekdays)) * 0.70) ;  // Make sure hours are aligned vertically. Should go in css.
-
-        $output_hours = $closed . $regular . $additional;
-        if (!empty($output_hours)) {
-          $output .= '<div class="oh-display" style="white-space: nowrap; ">'
-                   .   '<div class="oh-display-dayname" style="display: inline-block; width: ' . $maxdaylen . 'em; ">'
-                   .     $output_dayname
-                   .     $settings['separator_day_hours']
-                   .   '</div>'
-                   .   '<span class="oh-display-hours" style="white-space: nowrap; display: inline;">'
-                   .     $closed . $regular . $additional
-                   .   '</span>'
-                   . '</div>';
-        }
-        break;
-
-      case 'office_hours_inline':
-        $output_hours = $closed . $regular . $additional;
-        if (!empty($output_hours)) {
-          $output .= (!empty($output)) ? $settings['separator_days'] : '';
-
-          $output .= $output_dayname
-                   . $settings['separator_day_hours']
-                   . $closed . $regular . $additional;
-        }
-
-      break;
-    }  // endswitch.
-  }  // endforeach.
+    $output_hours = $closed . $regular . $additional;
+    if (!empty($output_hours)) {
+      $output .= (empty($output)) ? '' : $settings['separator_days'];
+      $output .= '<span class="oh-display" style="white-space: nowrap; ">'
+               .   '<span class="oh-display-label" style="display: inline-block; width: ' . ($max_label_length * 0.70) . 'em; ">'
+               .     $hours['label']
+               .     $settings['separator_day_hours']
+               .   '</span>';
+      if ($closed) {
+        $output .= '<span class="oh-display-closed">';
+      }
+      else {
+        $output .= '<span class="oh-display-hours">';
+      }
+      $output .=     $closed . $regular . $additional
+               .   '</span>'
+               . '</span>';
+    }
+  }
 
   return $output;
 }
