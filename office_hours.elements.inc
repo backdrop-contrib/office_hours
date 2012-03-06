@@ -68,8 +68,8 @@ function office_hours_field_process($element, &$form_state, $form) {
     $element['#prefix'] = '<div class="office-hours-block"><div class="dayname">' . $days[$day] . '</div>';
   }
   elseif ($field['settings']['addhrs']) {  // second cell, we're supposed to show the 'add hours link'
-    $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link'))) . '<div class="office-hours-block" style = "display:none;">' . t('And');
-    $element['#prefix'] = isset($element['#value'][$field_strhrs]) ? '<div class="office-hours-block">' . t('And') : $link;
+    $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link'))) . '<div class="office-hours-block" style = "display:none;">' . '<div class="dayname">' . t('And') . '</div>';
+    $element['#prefix'] = isset($element['#value'][$field_strhrs]) ? '<div class="office-hours-block">' . '<div class="dayname">' . t('And') . '</div>' : $link;
   }
   else { //this is the second cell and were not showing it- better clear it (in case a value was entered before).
     $element['#prefix'] = "<div class='oh-hide'>";
