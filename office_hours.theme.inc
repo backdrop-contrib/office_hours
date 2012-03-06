@@ -13,34 +13,58 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
   $settings = $display['settings'];
   $formatter = $display['type'];
   $element[0] = array(
-    '#markup' => theme($display['type'] . '_formatter_default', array('element' => $items, 'field' => $instance)),
+    '#markup' => theme($field['type'] . '_formatter_default', array('element' => $items, 'field' => $instance, 'display' => $display)),
   );
   return $element;
 }
 
 /**
- * Theme function for 'default' text field formatter.
+ * Theme function for field formatter.
+ * Adapted for 2 types:
+ * - default, 'normal', tabular format
+ * - inline format, adapted for use in interfaces such as Google Places.
+ * This is put in 1 function, since there is a lot of pre-processing before the actual formatting,
+ * So you'll find 2 parts: part1 = Preprocessing, part2 = Formatting, depending on the choosen formatter.
+ * @TODO: use e.g. strtotime() / Date_module http://php.net/manual/en/function.date.php functions for proper time formatting.
  */
 function theme_office_hours_formatter_default($vars) {
-  $output = '';
   $items = array();
-  $first = variable_get('date_first_day', 0); 
   $field = field_info_field($vars['field']['field_name']);
   $element = $vars['element'];
-  $weekdays = array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'), 3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday') );
+  $display = $vars['display'];
+  $settings = $vars['display']['settings'];
+  $formatter = $vars['display']['type'];
 
+  switch ($settings['daysformat']) {
+    case 'long':
+      $weekdays = date_week_days(TRUE);
+      break;
+    case 'short':
+      $weekdays = date_week_days_abbr(TRUE, TRUE, 3); // Abbreviate up to 3 characters
+      break;
+    case 'number':
+      $weekdays = array(0 => 1, 1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6, 6 => 7 );
+      break;
+    case 'none':
+      $weekdays = array(0 => '', 1 => '', 2 => '', 3 => '', 4 => '', 5 => '', 6 => '' );
+      $settings['separator_day_hours'] = '';  // override user's setting if daysformat = 'none'. (Should we?)
+      break;
+  }
+
+  // Format the 'hours'.
   foreach (element_children($element) as $key => $arraykey) {
     $item = $element[$arraykey];
     $day = (int)($item['day'] / 2); // Keys are 0+1 for sunday, 2+3 for monday, etc. Each day may have normal hours + extra hours.
     if (isset($day)) {
-      $strhrs = _office_hours_mil_to_tf(check_plain($item['starthours']));  
+      // @TODO: use e.g. strtotime() or Date_module for standard time formatting. See http://php.net/manual/en/function.date.php.
+      $strhrs = _office_hours_mil_to_tf(check_plain($item['starthours']));
       $endhrs = _office_hours_mil_to_tf(check_plain($item['endhours']));
       if ($field['settings']['hoursformat']) {
         $strhrs = _office_hours_convert_to_ampm($strhrs);
         $endhrs = _office_hours_convert_to_ampm($endhrs);
       }
-      $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; //we're aggregating hours for days together.
-    }   
+      $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; // We're aggregating hours for days together.
+    }
   }
 
   // add the closed days again, to 1) sort by first_day_of_week and 2) toggle show on/off
@@ -49,36 +73,87 @@ function theme_office_hours_formatter_default($vars) {
         $items[$key][]= array('closed' => 'closed'); //silly, but we need this as an array because we can't use a string offset later
     }
   }
-  ksort($items);
-  $items = date_week_days_ordered($items);
-  $weekdays = date_week_days_ordered($weekdays);
 
+  // Sort the days of the week again, because sorting is lost by adding the closed days.
+  // Do not sort by first_day_of_week for certain types: 'number'/'none' are more frequently used by machines/interfaces.
+  ksort($items);
+  switch ($settings['daysformat']) {
+    case 'long':
+    case 'short':
+      $items = date_week_days_ordered($items);
+      $weekdays = date_week_days_ordered($weekdays);
+      break;
+    case 'number':
+    case 'none':
+      break;
+  }
+
+  $output = '';
+  $values = array();
   foreach ($items as $day => $hours) {
-    $dayname = $weekdays[$day];
     $closed = '';
     $regular = '';
     $additional = '';
     if ( isset($hours[0]['closed']) ) {
-      if ( !empty($field['settings']['showclosed']) ) { // don't output unnecessary fields
-        $closed = '<span class="oh-display-hours">' . t('Closed') . '</span>';  
+      if ( !empty($settings['showclosed']) ) {
+        // Format the empty day with a text like 'Closed' or '00:00-00:00'
+        $closed = check_plain( t($settings['closedformat'] ) );
+      }
+      else {
+        // Don't output unnecessary fields.
       }
     }
     else {
       $strhrs1 = $hours[0]['strhrs'];
       $endhrs1 = $hours[0]['endhrs'];
-      $regular    = '<span class="oh-display-hours">' . $strhrs1 . ' - ' . $endhrs1 . '</span>';
-      if (isset($hours[1])) {
-        $strhrs2 = $hours[1]['strhrs'];
-        $endhrs2 = $hours[1]['endhrs'];
-        $additional = ' , <span class="oh-display-hours">' . $strhrs2 . ' - ' . $endhrs2 . '</span>';
-      } 
+      if ( isset($hours[1] ) ) {
+        if (!$settings['compress']) {
+          $strhrs2 = $hours[1]['strhrs'];
+          $endhrs2 = $hours[1]['endhrs'];
+          $additional = $settings['separator_more_hours'] . $strhrs2 . $settings['separator_hours_hours'] . $endhrs2;
+        }
+        else {
+          // Override endhours of morning with endhours of evening.
+          $endhrs1 = $hours[1]['endhrs'];
+        }
+      }
+      $regular = $strhrs1 . $settings['separator_hours_hours'] . $endhrs1;
     }
 
-    $output_line = $closed . $regular . $additional ;  
-    if (!empty($output_line)) {
-      $output .= '<div class="oh-display">' . $dayname . ': ' . $output_line . '</div>';  
-    }
-  }
+    $output_dayname = $weekdays[$day];
+
+    switch ($formatter) {
+      case 'office_hours':
+        $maxdaylen = max( 3, max(array_map('strlen', $weekdays)) * 0.70) ;  // Make sure hours are aligned vertically. Should go in css.
+
+        $output_hours = $closed . $regular . $additional;
+        if (!empty($output_hours)) {
+          $output .= '<div class="oh-display" style="white-space: nowrap; ">'
+                   .   '<div class="oh-display-dayname" style="display: inline-block; width: ' . $maxdaylen . 'em; ">'
+                   .     $output_dayname
+                   .     $settings['separator_day_hours']
+                   .   '</div>'
+                   .   '<span class="oh-display-hours" style="white-space: nowrap; display: inline;">'
+                   .     $closed . $regular . $additional
+                   .   '</span>'
+                   . '</div>';
+        }
+        break;
+
+      case 'office_hours_inline':
+        $output_hours = $closed . $regular . $additional;
+        if (!empty($output_hours)) {
+          $output .= (!empty($output)) ? $settings['separator_days'] : '';
+
+          $output .= $output_dayname
+                   . $settings['separator_day_hours']
+                   . $closed . $regular . $additional;
+        }
+
+      break;
+    }  // endswitch.
+  }  // endforeach.
+
   return $output;
 }
 

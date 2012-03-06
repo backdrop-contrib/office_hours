@@ -275,7 +275,7 @@ function office_hours_field_update($entity_type, $entity, $field, $instance, $la
 function office_hours_field_formatter_info() {
   return array(
     'office_hours' => array(
-      'label' => 'office hours',
+      'label' => 'Office hours - tabular',
       'field types' =>  array('office_hours_formatter_default', 'office_hours', 'office_hours_multiple_values', 'office_hours_select'),
       'multiple values' => FIELD_BEHAVIOR_DEFAULT,
       'settings' => array(
@@ -291,7 +291,7 @@ function office_hours_field_formatter_info() {
       ),
     ),
     'office_hours_inline' => array(
-      'label' => t('Office hours inline (e.g. Google Places)'),
+      'label' => t('Office hours - inline (e.g. Google Places)'),
       'field types' => array('office_hours', ),
       'multiple values' => FIELD_BEHAVIOR_DEFAULT,
       'settings' => array(
