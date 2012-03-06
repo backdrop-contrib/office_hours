@@ -100,13 +100,22 @@ function theme_office_hours_select($vars) {
  *
  */
 function office_hours_field_multiple_value_form($variables) {
+  // Use Field's theme function for non-office hours fields.
+  if (empty($variables['element'][0]['#type']) || $variables['element'][0]['#type'] != 'office_hours') {
+    return theme_field_multiple_value_form($variables);
+  }
+
+  // The following is a copy from standard theme_field_multiple_value_form()
+  // http://api.drupal.org/api/drupal/modules%21field%21field.form.inc/function/theme_field_multiple_value_form/7
+  // Modifications for the Office Hours form are commented out.
+  // We've removed the columns 'order' and 'drag&drop', and do not add the drap&drop JS.
+
   $element = $variables['element'];
   $output = '';
-
   if ($element['#cardinality'] > 1 || $element['#cardinality'] == FIELD_CARDINALITY_UNLIMITED) {
     $table_id = drupal_html_id($element['#field_name'] . '_values');
     $order_class = $element['#field_name'] . '-delta-order';
-    $required = !empty($element['#required']) ? '<span class="form-required" title="' . t('This field is required. ') . '">*</span>' : '';
+    $required = !empty($element['#required']) ? theme('form_required_marker', $variables) : '';
 
     $header = array(
       array(
@@ -114,12 +123,13 @@ function office_hours_field_multiple_value_form($variables) {
         'colspan' => 2,
         'class' => array('field-label'),
       ),
-      t('Order'),
+//      t('Order'),
     );
     $rows = array();
-    $items = array();
+
     // Sort items according to '_weight' (needed when the form comes back after
     // preview or failed validation)
+    $items = array();
     foreach (element_children($element) as $key) {
       if ($key === 'add_more') {
         $add_more_button = &$element[$key];
@@ -131,18 +141,19 @@ function office_hours_field_multiple_value_form($variables) {
     usort($items, '_field_sort_items_value_helper');
 
     $items = _office_hours_arrange_day($items); //this calls the function that arranges the first day of the week.
+
     // Add the items as table rows.
     foreach ($items as $key => $item) {
       $item['_weight']['#attributes']['class'] = array($order_class);
       $delta_element = drupal_render($item['_weight']);
       $cells = array(
-        array('data' => '', 'class' => array('field-multiple-drag')),
+//        array('data' => '', 'class' => array('field-multiple-drag')),
         drupal_render($item),
-        array('data' => $delta_element, 'class' => array('delta-order')),
+//        array('data' => $delta_element, 'class' => array('delta-order')),
       );
       $rows[] = array(
         'data' => $cells,
-        //'class' => array('draggable'),
+//        'class' => array('draggable'),
       );
     }
 
@@ -152,13 +163,13 @@ function office_hours_field_multiple_value_form($variables) {
     $output .= '<div class="clearfix">' . drupal_render($add_more_button) . '</div>';
     $output .= '</div>';
 
-    drupal_add_tabledrag($table_id, 'order', 'sibling', $order_class);
+//    drupal_add_tabledrag($table_id, 'order', 'sibling', $order_class);
   }
   else {
-    foreach (element_children($element) as $key => $value) {
-      //$output .= office_hours_field_multiple_value_form(array('element' => $element[$value]));
+    foreach (element_children($element) as $key) {
       $output .= drupal_render($element[$key]);
     }
   }
+
   return $output;
 }
