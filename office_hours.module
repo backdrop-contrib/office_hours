@@ -199,13 +199,14 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#default_value' => isset($settings['addhrs']) ? $settings['addhrs'] : 1,
     '#description' => t('Make it possible to use 2 hour block for each day instead of one.'),
   );
-  $form['showclosed'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Show empty days'),
-    '#required' => FALSE,
-    '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : 0,
-    '#description' => t('Show empty days on the node.'),
-  );
+// The following settings are moved from the Widget settings to the Formatter settings.
+//  $form['showclosed'] = array(
+//    '#type' => 'checkbox',
+//    '#title' => t('Show empty days'),
+//    '#required' => FALSE,
+//    '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : 0,
+//    '#description' => t('Show empty days on the node.'),
+//  );
   return $form;
 }
 
@@ -277,8 +278,140 @@ function office_hours_field_formatter_info() {
       'label' => 'office hours',
       'field types' =>  array('office_hours_formatter_default', 'office_hours', 'office_hours_multiple_values', 'office_hours_select'),
       'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+      'settings' => array(
+        'daysformat' => 'long',
+//        'hoursformat' => '12'/'24'/'HH:mm',
+        'compress' => FALSE,
+        'showclosed' => FALSE,
+        'closedformat' => 'Closed',   // The html-string for closed/empty days.
+        'separator_days' => '',
+        'separator_day_hours' => ': ',
+        'separator_hours_hours' => '-',
+        'separator_more_hours' => ', ',
+      ),
+    ),
+    'office_hours_inline' => array(
+      'label' => t('Office hours inline (e.g. Google Places)'),
+      'field types' => array('office_hours', ),
+      'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+      'settings' => array(
+        'daysformat' => 'long',
+//        'hoursformat' => '12'/'24'/'HH:mm',
+        'compress' => FALSE,
+        'showclosed' => FALSE,
+        'closedformat' => 'Closed',   // The html-string for closed/empty days.
+        'separator_days' => ', ',
+        'separator_day_hours' => ': ',
+        'separator_hours_hours' => '-',
+        'separator_more_hours' => ', ',
+      ),
     ),
   );
+}
+
+function office_hours_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $instance['display'][$view_mode]['settings'];
+
+  $form = array();
+
+// @TODO: The settings could go under the several 'core' settings,
+// as above in the implemented hook_FORMID_form_alter functions.
+  $form = array(
+    '#type' => 'fieldset',
+    '#title' => t('Office hours formatter settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#weight' => 5,
+  );
+
+  $form['daysformat'] = array(
+    '#type' => 'select',
+    '#title' => t('Day notation'),
+    '#options' => array('long' => t('long'), 'short' => t('short'), 'number' => t('number'), 'none' => t('none')),
+    '#default_value' => isset($settings['daysformat']) ? $settings['daysformat'] : 'long',
+    '#description' => t('Display the day.'),
+  );
+// @TODO: Create a setting for the exact time format
+//  $form['hoursformat'] = array(
+//    '#type' => 'textfield',
+//    '#size' => 10,
+//    '#title' => t('Hours format'),
+//    '#options' => array(t('24 hrs.'), t('12 hrs')),
+//    '#default_value' => isset($settings['hoursformat']) ? $settings['hoursformat'] : 0,
+//    '#required' => FALSE,
+//    '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
+//  );
+
+    $form['compress'] = array(
+      '#title' => t('Compress Hours + More hours into one set'),
+      '#type' => 'checkbox',
+      '#default_value' => isset($settings['compress']) ? $settings['compress'] : FALSE,
+      '#description' => t('Even if more hours is allowed, you might want to show a compressed form. E.g,  7:00-12:00, 13:30-19:00 becomes 7:00-19:00.'),
+      '#required' => FALSE,
+    );
+
+    $form['showclosed'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show empty days'),
+      '#required' => FALSE,
+      '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : FALSE,
+      '#description' => t('Show empty days on the field.'),
+    );
+    $form['closedformat'] = array(
+      '#type' => 'textfield',
+      '#size' => 30,
+      '#title' => t('Empty days notation'),
+      '#default_value' => isset($settings['closedformat']) ? $settings['closedformat'] : 'Closed',
+      '#required' => FALSE,
+      '#description' => t('Format of empty days. You can use translatable text (do not use quotes) and HTML in this field.'),
+    );
+
+// taken from views_plugin_row_fields.inc
+    $form['separator_days'] = array(
+      '#title' => t('Separators'),
+      '#type' => 'textfield',
+      '#size' => 10,
+      '#default_value' => isset($settings['separator_days']) ? $settings['separator_days'] : ', ',
+      '#description' => t('This separator will be placed between the days.'),
+    );
+    $form['separator_day_hours'] = array(
+      '#type' => 'textfield',
+      '#size' => 10,
+      '#default_value' => isset($settings['separator_day_hours']) ? $settings['separator_day_hours'] : ',',
+      '#description' => t('This separator will be placed between the day and the hours.'),
+    );
+    $form['separator_hours_hours'] = array(
+      '#type' => 'textfield',
+      '#size' => 10,
+      '#default_value' => isset($settings['separator_hours_hours']) ? $settings['separator_hours_hours'] : ' - ',
+      '#description' => t('This separator will be placed between the hours of a day.'),
+    );
+    $form['separator_more_hours'] = array(
+      '#type' => 'textfield',
+      '#size' => 10,
+      '#default_value' => isset($settings['separator_more_hours']) ? $settings['separator_more_hours'] : ', ',
+      '#description' => t('This separator will be placed between the hours and more_hours of a day.'),
+    );
+
+  return $form;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary.
+ * Returns a short summary for the current formatter settings of an instance.
+ * @TODO: return more info, like the Date module does.
+**/
+function office_hours_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $formatter = $display['type'];
+  $summary = array();
+
+  $summary[] = t('Display Office hours in different formats.');
+
+//  return $summary;
+  return implode('<br />', $summary);
 }
 
 /**
