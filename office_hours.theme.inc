@@ -11,11 +11,11 @@
 function office_hours_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
   if ($items) {
-    $settings = $display['settings'];
-    $formatter = $display['type'];
-    $element[0] = array(
-      '#markup' => theme($field['type'] . '_formatter_default', array('element' => $items, 'field' => $instance, 'display' => $display)),
-    );
+    $element[0] = array('#markup' => theme($field['type'] . '_formatter_default',
+                                           array('element' => $items,
+                                                 //'field' => $instance,
+                                                 'display' => $display,
+                                                 )),);
   }
   return $element;
 }
@@ -30,12 +30,8 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
  * @TODO: use e.g. strtotime() / Date_module http://php.net/manual/en/function.date.php functions for proper time formatting.
  */
 function theme_office_hours_formatter_default($vars) {
-  $items = array();
-  $field = field_info_field($vars['field']['field_name']);
   $element = $vars['element'];
-  $display = $vars['display'];
   $settings = $vars['display']['settings'];
-  $formatter = $vars['display']['type'];
   $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
 
   // Get the label per weekday.
@@ -55,6 +51,7 @@ function theme_office_hours_formatter_default($vars) {
       break;
   }
 
+  $items = array();
   // Format the 'hours', e.g. 0900 -> 09:00.
   foreach (element_children($element) as $key => $arraykey) {
     $item = $element[$arraykey];
@@ -63,14 +60,14 @@ function theme_office_hours_formatter_default($vars) {
       // @TODO: use e.g. strtotime() or Date_module for standard time formatting. See http://php.net/manual/en/function.date.php.
       $strhrs = _office_hours_mil_to_tf(check_plain($item['starthours']));
       $endhrs = _office_hours_mil_to_tf(check_plain($item['endhours']));
-      if ($field['settings']['hoursformat']) {
+      if (!empty($settings['hoursformat'])) {
         $strhrs = _office_hours_convert_to_ampm($strhrs);
         $endhrs = _office_hours_convert_to_ampm($endhrs);
       }
 
       $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; // We're aggregating hours for days together.
       $items[$day]['label'] = $weekdays[$day];
-      $max_label_length = max( $max_label_length, strlen($items[$day]['label'])); 
+      $max_label_length = max( $max_label_length, strlen($items[$day]['label']));
 
       // Add group_id to group days with equal hours.
       if ($settings['grouped']) {
@@ -90,7 +87,7 @@ function theme_office_hours_formatter_default($vars) {
     if (!array_key_exists($day, $items)) {
       $items[$day][]= array('closed' => 'closed'); //silly, but we need this as an array because we can't use a string offset later
       $items[$day]['label'] = $weekdays[$day];
-      $max_label_length = max($max_label_length, strlen($items[$day]['label'])); 
+      $max_label_length = max($max_label_length, strlen($items[$day]['label']));
 
       // Add group_id for closed days
       if ($settings['grouped']) {
@@ -128,7 +125,7 @@ function theme_office_hours_formatter_default($vars) {
       else {
         // second, third day of group: adjust the label of this group to e.g. 'mon-wed'
         $items[$day]['label'] = $group_from_label . $settings['separator_grouped_days'] . $hours['label'];
-        $max_label_length = max($max_label_length, strlen($items[$day]['label'])); 
+        $max_label_length = max($max_label_length, strlen($items[$day]['label']));
         // delete previous item of this group, so it will not be shown.
         unset ($items[$day-1]);
       }
@@ -170,21 +167,25 @@ function theme_office_hours_formatter_default($vars) {
 
     $output_hours = $closed . $regular . $additional;
     if (!empty($output_hours)) {
-      $output .= (empty($output)) ? '' : $settings['separator_days'];
-      $output .= '<span class="oh-display" style="white-space: nowrap; ">'
-               .   '<span class="oh-display-label" style="display: inline-block; width: ' . ($max_label_length * 0.70) . 'em; ">'
+      $output .= '<span class="oh-display">'
+               .   '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.70) . 'em; ">'
                .     $hours['label']
                .     $settings['separator_day_hours']
                .   '</span>';
       if ($closed) {
-        $output .= '<span class="oh-display-closed">';
+        $output .= '<span class="oh-display-closed">'
+                 .   $closed . $regular . $additional
+                 .   $settings['separator_days']
+                 . '</span>';
       }
       else {
-        $output .= '<span class="oh-display-hours">';
+        $output .= '<span class="oh-display-hours">'
+                 .   $closed . $regular . $additional
+                 .   $settings['separator_days']
+                 . '</span>';
+
       }
-      $output .=     $closed . $regular . $additional
-               .   '</span>'
-               . '</span>';
+      $output .= '</span>';
     }
   }
 

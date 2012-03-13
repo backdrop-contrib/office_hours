@@ -23,7 +23,7 @@ function office_hours_theme ($existing, $type, $theme, $path) {
     'field_multiple_value_form' => $base + array('render element' => 'element'),
     'office_hours_select' => $base + array('render element' => 'element'),
   );
-return $themes;
+  return $themes;
 }
 
 function office_hours_theme_registry_alter(&$theme_registry) {
@@ -33,8 +33,14 @@ function office_hours_theme_registry_alter(&$theme_registry) {
 /**
  * Implements hook_form_alter().
  */
-function office_hours_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'field_ui_field_edit_form') {
+//function office_hours_form_alter(&$form, &$form_state, $form_id) {
+//}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+//if ($form_id == 'field_ui_field_edit_form') {
     if ($form['#field']['type'] == 'office_hours') {
       $description = t('14 hours blocks is the current default. See below for limiting it');
       $description .= '<br/><strong>' . t('Warning! Changing this setting after data has been created could result in the loss of data!') . '</strong>';
@@ -46,9 +52,12 @@ function office_hours_form_alter(&$form, &$form_state, $form_id) {
         '#description' => $description,
       );
     }
-  }
+//}
 }
 
+/**
+ * @TODO: does this hook(?)/function(?) still exist in D7?
+ */
 function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
   foreach ($form as $key => $field) {
     if (is_array($field) && isset($field['#language'])
@@ -117,6 +126,7 @@ function office_hours_init() {
 
 /**
  * Implements hook_content_is_empty().
+ * @TODO: does this still exist in D7?
  */
 function office_hours_field_is_empty($item, $field) {
   if ( $item['starthours'] == '' || $item['endhours'] == '' || !isset($item['day']) ) {
@@ -156,7 +166,7 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
   $form['hoursformat'] = array(
     '#type' => 'select',
     '#title' => t('Hours format'),
-    '#options' => array(t('24 hrs.'), t('12 hrs')),
+    '#options' => array(0 => t('24 hrs'), 1 => t('12 hrs')),
     '#default_value' => isset($settings['hoursformat']) ? $settings['hoursformat'] : 0,
     '#required' => FALSE,
     '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
@@ -280,7 +290,7 @@ function office_hours_field_formatter_info() {
       'multiple values' => FIELD_BEHAVIOR_DEFAULT,
       'settings' => array(
         'daysformat' => 'long',
-//        'hoursformat' => '12'/'24'/'HH:mm',
+        'hoursformat' => 0, // '12'/'24'/'HH:mm',
         'compress' => FALSE,
         'grouped' => FALSE,
         'showclosed' => FALSE,
@@ -318,16 +328,15 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#default_value' => isset($settings['daysformat']) ? $settings['daysformat'] : 'long',
     '#description' => t('Display the day.'),
   );
-// @TODO: Create a setting for the exact time format
-//  $form['hoursformat'] = array(
-//    '#type' => 'textfield',
-//    '#size' => 10,
-//    '#title' => t('Hours format'),
-//    '#options' => array(t('24 hrs.'), t('12 hrs')),
-//    '#default_value' => isset($settings['hoursformat']) ? $settings['hoursformat'] : 0,
-//    '#required' => FALSE,
-//    '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
-//  );
+
+  $form['hoursformat'] = array(
+    '#type' => 'select',
+    '#title' => t('Hours format'),
+    '#options' => array(0 => t('24 hrs'), 1 => t('12 hrs')),
+    '#default_value' => isset($settings['hoursformat']) ? $settings['hoursformat'] : 0,
+    '#required' => FALSE,
+    '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
+  );
 
     $form['compress'] = array(
       '#title' => t('Compress Hours + More hours into one set'),

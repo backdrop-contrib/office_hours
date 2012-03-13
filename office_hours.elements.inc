@@ -123,7 +123,7 @@ function office_hours_select_process($element, &$form_state, $form) {
       $defhr = str_pad($defhr, 2, '0', STR_PAD_LEFT);
     }
   }
-  
+
   $hours = ($element['#hoursformat'] == 1) ? date_hours('g') : date_hours('H');
   $minutes = date_minutes('i', FALSE, $element['#granularity']);
 
