@@ -10,11 +10,13 @@
  */
 function office_hours_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
-  $settings = $display['settings'];
-  $formatter = $display['type'];
-  $element[0] = array(
-    '#markup' => theme($field['type'] . '_formatter_default', array('element' => $items, 'field' => $instance, 'display' => $display)),
-  );
+  if ($items) {
+    $settings = $display['settings'];
+    $formatter = $display['type'];
+    $element[0] = array(
+      '#markup' => theme($field['type'] . '_formatter_default', array('element' => $items, 'field' => $instance, 'display' => $display)),
+    );
+  }
   return $element;
 }
 
