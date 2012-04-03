@@ -132,10 +132,10 @@ function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Implements hook_init().
  */
-function office_hours_init() {
-  drupal_add_css(drupal_get_path('module', 'office_hours') . '/office_hours.css');
+//function office_hours_init() {
+//  drupal_add_css(drupal_get_path('module', 'office_hours') . '/office_hours.css'); //D7: moved to info-file
   //drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js', 'theme');
-}
+//}
 
 /**
  * Implements hook_field_is_empty().

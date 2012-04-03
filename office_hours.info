@@ -5,3 +5,11 @@ dependencies[] = date_api
 files[] = includes/office_hours_handler_filter_day.inc
 files[] = includes/office_hours_handler_filter_hours.inc
 core = 7.x
+stylesheets[all][] = office_hours.css
+
+; Information added by drupal.org packaging script on 2012-03-14
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "office_hours"
+datestamp = "1331685006"
+
