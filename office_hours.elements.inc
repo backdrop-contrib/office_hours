@@ -56,7 +56,8 @@ function office_hours_field_process($element, &$form_state, $form) {
 	$form_state['complete form'][$element['#field_name']][$element['#language']][$element['#weight']] = $form_state['complete form'][$element['#field_name']][$element['#language']][$element['#value']['day']];
 	$form_state['complete form'][$element['#field_name']][$element['#language']][$element['#value']['day']] = $tmp;
 	$element = $form_state['complete form'][$element['#field_name']][$element['#language']][$element['#weight']];
-	}}*/
+	}}
+  */
   $day = $element['#weight'];
   $field = $form_state['field'][$element['#field_name']][$element['#language']]['field'];
   $day = ($day == 0) ? 0 : (($day & 1) ? ($day-1)/2 : $day/2);
@@ -174,3 +175,69 @@ function office_hours_select_validate($element, &$form_state) {
   }
 }
 
+/**
+ * Implements hook_field_is_empty() for hours selection element.
+ */
+function office_hours_select_is_empty($item, $field) {
+  if ( ( $item['hours']   == '' || $item['hours']   == '00' )
+     &&( $item['minutes'] == '' || $item['minutes'] == '00' ) ) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements a callback for _office_hours_elements() 
+ * which defines the 'office_hours' (day) and 'office_hours_select' (hour) elements.
+ *
+ * You can find the value in $element['#value'], but better in $form_state['values'],
+ * which is set in office_hours_select_validate().
+ */
+function office_hours_validate($element, &$form_state) {
+  $field = $form_state['field'][$element['#field_name']][$element['#language']]['field'];
+  // Only if 'Validate hours' is set in field settings.
+  if (!$field['settings']['valhrs']) {
+    return;
+  }
+
+  $delta = $element['#delta'];
+  $item = $form_state['values'][$element['#field_name']][$element['#language']][$delta];
+
+  $error_text = '';
+  if (empty($item['starthours']) && empty($item['endhours']) ) {
+    // This is OK.
+  }
+  elseif (!empty($item['starthours']) xor !empty($item['endhours']) ) {
+//  $error_text = 'Both Opening hours and Closing hours must be set.';
+  }
+  elseif ($item['starthours'] > $item['endhours'] ) {
+    $error_text = 'Closing hours are earlier than opening hours.';
+  }
+  elseif (!empty($field['settings']['limitstart']) && !empty($field['settings']['limitend'])) {
+    if ($field['settings']['limitstart'] > $item['starthours'] 
+        ||  $field['settings']['limitend'] < $item['endhours']) {
+      $error_text = 'Opening hours are outside limits' . ' (' . $field['settings']['limitstart'] . ' - ' . $field['settings']['limitend'] .').';
+    }
+  }
+
+  if ($error_text) {
+    $weekdays = date_week_days(TRUE);
+    $error_text  = t($weekdays[$delta / 2]) . ': ' . t($error_text);
+
+    form_error($element, $error_text);
+
+//    // The following code would be used in hook_field_validate().
+//    $errors[$field['field_name']][$langcode][$delta][] = array(
+//      'error' => 'office_hours_input_error', 
+//      'message' => $error_text,
+//    );
+  }
+
+//  foreach ($element as $delta => $item) {
+//    if (empty($item['starthours']) && empty($item['endhours'])) {
+//      $item['starthours'] = NULL;
+//      $item['endhours'] = NULL;
+//    }
+//  }
+//  form_set_value($element, $element, $form_state);
+}

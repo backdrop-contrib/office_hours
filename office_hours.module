@@ -8,6 +8,19 @@ module_load_include('inc', 'office_hours', 'office_hours.theme');
 module_load_include('inc', 'office_hours', 'office_hours.feeds'); // To be removed after fixing Feeds issue 1224836
 
 /**
+ * Implements hook_field_update().
+ */
+//function office_hours_field_update($entity_type, $entity, $field, $instance, $lang, $items) {
+//  $field_name = $field['field_name'];
+//  echo $field_name;
+//  if (empty($items)) {
+//    return;
+//  }
+//  $items = _office_hours_set_weight($items);
+//  $entity->{$field['field_name']}[$lang] = $items;
+//}
+
+/**
  * Implements hook_theme().
  */
 function office_hours_theme ($existing, $type, $theme, $path) {
@@ -56,7 +69,8 @@ function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, 
 }
 
 /**
- * @TODO: does this hook(?)/function(?) still exist in D7?
+ * @TODO: This Implementation of hook_form_alter() is not used in D7-version of module,
+ *        due to the typo in the function name.
  */
 function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
   foreach ($form as $key => $field) {
@@ -125,8 +139,7 @@ function office_hours_init() {
 }
 
 /**
- * Implements hook_content_is_empty().
- * @TODO: does this still exist in D7?
+ * Implements hook_field_is_empty().
  */
 function office_hours_field_is_empty($item, $field) {
   if ( $item['starthours'] == '' || $item['endhours'] == '' || !isset($item['day']) ) {
@@ -163,6 +176,7 @@ function office_hours_field_info() {
 function office_hours_field_settings_form($field, $instance, $has_data) {
   $settings = $field['settings'];
   $form = array();
+  $form['#element_validate'] = array('_office_hours_field_settings_form_validate');
   $form['hoursformat'] = array(
     '#type' => 'select',
     '#title' => t('Hours format'),
@@ -179,21 +193,12 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#required' => FALSE,
     '#description' => t('Restrict the input to fixed fractions of an hour.'),
   );
-  $form['limitstart'] = array(
-    '#type' => 'office_hours_select',
-    '#title' => t('Limit widget start hours'),
-    '#default_hours' => isset($settings['limitstart']) ? $settings['limitstart'] : '',
-    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
-    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
-    '#prefix' => '<div class="office-hours-block" style="display:inline">',
-  );
-  $form['limitend'] = array(
-    '#type' => 'office_hours_select',
-    '#title' => t('Limit widget end hours'),
-    '#default_hours' => isset($settings['limitend']) ? $settings['limitend'] : '',
-    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
-    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
-    '#suffix' => '</div>',
+  $form['addhrs'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display the "Add more hours" link'),
+    '#required' => FALSE,
+    '#default_value' => isset($settings['addhrs']) ? $settings['addhrs'] : 1,
+    '#description' => t('Make it possible to use 2 hour block for each day instead of one.'),
   );
   $form['valhrs'] = array(
     '#type' => 'checkbox',
@@ -202,13 +207,24 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#default_value' => isset($settings['valhrs']) ? $settings['valhrs'] : 0,
     '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
   );
-  $form['addhrs'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display the "Add more hours" link'),
-    '#required' => FALSE,
-    '#default_value' => isset($settings['addhrs']) ? $settings['addhrs'] : 1,
-    '#description' => t('Make it possible to use 2 hour block for each day instead of one.'),
+  $form['limitstart'] = array(
+    '#type' => 'office_hours_select',
+    '#title' => t('Limit widget start hours'),
+    '#default_hours' => isset($settings['limitstart']) ? $settings['limitstart'] : '',
+    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
+    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
+    '#prefix' => '<div class="office-hours-block" style="display:inline">' . t('from'),
   );
+  $form['limitend'] = array(
+    '#type' => 'office_hours_select',
+    '#title' => t('Limit widget end hours'),
+    '#default_hours' => isset($settings['limitend']) ? $settings['limitend'] : '',
+    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
+    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
+    '#prefix' => t('until'),
+    '#suffix' => '</div>',
+  );
+
 // The following settings are moved from the Widget settings to the Formatter settings.
 //  $form['showclosed'] = array(
 //    '#type' => 'checkbox',
@@ -221,19 +237,27 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
 }
 
 /**
- * Implements hook_field_validate().
+ * Implements the #element_validate callback for myfield_field_settings_form().
+ * Verifies the office hours limits.
+ * "Please note that this will work as long as the opening hours are not through midnight."
  */
-function office_hours_field_settings_validate($op, &$node, $field, &$items, $teaser, $page) {
-  foreach ($items as $delta => $item) {
-    if ($field['valhrs']) {
-     if (!empty($item['starthours']) && !empty($item['endhours']) ) {
-       $error_field = $field['field_name'] . '][' . $delta . '][endhours';
-         if ($item['starthours'] > $item['endhours']) {
-            form_set_error($error_field, t('Closing hours are earlier than opening hours validator'));
-         }
-       }
-    }
+function _office_hours_field_settings_form_validate($element, &$form_state) {
+  if (office_hours_select_is_empty($element['limitstart']['#value'], NULL) ||
+      office_hours_select_is_empty($element['limitend']['#value'], NULL) ) {
+    // It is OK to set only from- or only to- hours.
   }
+  elseif ($element['limitstart']['#value']['hours'] < $element['limitend']['#value']['hours']) {
+    // OK
+  }
+  elseif ($element['limitstart']['#value']['hours'] > $element['limitend']['#value']['hours']) {
+    form_error($element['limitstart'], t('%start is later then %end.', array('%start' => $element['limitstart']['#title'], '%end' => $element['limitend']['#title'] )));
+  }
+  elseif ($element['limitstart']['#value']['minutes'] > $element['limitend']['#value']['minutes']) {
+    form_error($element['limitstart'], t('%start is later then %end.', array('%start' => $element['limitstart']['#title'], '%end' => $element['limitend']['#title'] )));
+  }
+
+  // You can update the values of the settings here too.
+//  form_set_value($element['limitstart'], $new_value, $form_state);
 }
 
 /**
@@ -252,32 +276,14 @@ function office_hours_field_schema($field) {
   return array('columns' => $db_columns);
 }
 
-function office_hours_validate($element, $form_state) {
-/*
-  foreach ($element as $delta => $item) {
-    if (empty($item['starthours']) && empty($item['endhours'])) {
-      $item['starthours'] = NULL;
-      $item['endhours'] = NULL;
-    }
-  }
-  form_set_value($element, $element, $form_state);
-*/
-}
-
 /**
- * Implements hook_field_update().
+ * Implements hook_field_validate().
+ * Is called a.o. when saving the content type field (default value) and content.
+ *
+ * Is not implemented: the validation is done in the element callback: office_hours_validate().
  */
-/*
-function office_hours_field_update($entity_type, $entity, $field, $instance, $lang, $items) {
-  $field_name = $field['field_name'];
-  echo $field_name;
-  if (empty($items)) {
-    return;
-  }
-  $items = _office_hours_set_weight($items);
-  $entity->{$field['field_name']}[$lang] = $items;
-}
-*/
+//function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+//}
 
 /**
  * Implements hook_field_formatter_info().
@@ -338,70 +344,70 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
   );
 
-    $form['compress'] = array(
-      '#title' => t('Compress Hours + More hours into one set'),
-      '#type' => 'checkbox',
-      '#default_value' => isset($settings['compress']) ? $settings['compress'] : FALSE,
-      '#description' => t('Even if more hours is allowed, you might want to show a compressed form. E.g.,  7:00-12:00, 13:30-19:00 becomes 7:00-19:00.'),
-      '#required' => FALSE,
-    );
+  $form['compress'] = array(
+    '#title' => t('Compress Hours + More hours into one set'),
+    '#type' => 'checkbox',
+    '#default_value' => isset($settings['compress']) ? $settings['compress'] : FALSE,
+    '#description' => t('Even if more hours is allowed, you might want to show a compressed form. E.g.,  7:00-12:00, 13:30-19:00 becomes 7:00-19:00.'),
+    '#required' => FALSE,
+  );
 
-    $form['grouped'] = array(
-      '#title' => t('Group consecutive days with same hours into one set'),
-      '#type' => 'checkbox',
-      '#default_value' => isset($settings['grouped']) ? $settings['grouped'] : FALSE,
-      '#description' => t('E.g., Mon: 7:00-19:00; Tue: 7:00-19:00 becomes Mon-Tue: 7:00-19:00'),
-      '#required' => FALSE,
-    );
+  $form['grouped'] = array(
+    '#title' => t('Group consecutive days with same hours into one set'),
+    '#type' => 'checkbox',
+    '#default_value' => isset($settings['grouped']) ? $settings['grouped'] : FALSE,
+    '#description' => t('E.g., Mon: 7:00-19:00; Tue: 7:00-19:00 becomes Mon-Tue: 7:00-19:00'),
+    '#required' => FALSE,
+  );
 
-    $form['showclosed'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Show empty days'),
-      '#required' => FALSE,
-      '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : FALSE,
-      '#description' => t('Show empty days on the field.'),
-    );
-    $form['closedformat'] = array(
-      '#type' => 'textfield',
-      '#size' => 30,
-      '#title' => t('Empty days notation'),
-      '#default_value' => isset($settings['closedformat']) ? $settings['closedformat'] : 'Closed',
-      '#required' => FALSE,
-      '#description' => t('Format of empty days. You can use translatable text (do not use quotes) and HTML in this field.'),
-    );
+  $form['showclosed'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show empty days'),
+    '#required' => FALSE,
+    '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : FALSE,
+    '#description' => t('Show empty days on the field.'),
+  );
+  $form['closedformat'] = array(
+    '#type' => 'textfield',
+    '#size' => 30,
+    '#title' => t('Empty days notation'),
+    '#default_value' => isset($settings['closedformat']) ? $settings['closedformat'] : 'Closed',
+    '#required' => FALSE,
+    '#description' => t('Format of empty days. You can use translatable text (do not use quotes) and HTML in this field.'),
+  );
 
 // taken from views_plugin_row_fields.inc
-    $form['separator_days'] = array(
-      '#title' => t('Separators'),
-      '#type' => 'textfield',
-      '#size' => 10,
-      '#default_value' => isset($settings['separator_days']) ? $settings['separator_days'] : ', ',
-      '#description' => t('This separator will be placed between the days. Use &#39&ltbr&gt&#39 to show each day on a new line.'),
-    );
-    $form['separator_grouped_days'] = array(
-      '#type' => 'textfield',
-      '#size' => 10,
-      '#default_value' => isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ',
-      '#description' => t('This separator will be placed between the labels of grouped days.'),
-    );
-    $form['separator_day_hours'] = array(
-      '#type' => 'textfield',
-      '#size' => 10,
-      '#default_value' => isset($settings['separator_day_hours']) ? $settings['separator_day_hours'] : ',',
-      '#description' => t('This separator will be placed between the day and the hours.'),
-    );
-    $form['separator_hours_hours'] = array(
-      '#type' => 'textfield',
-      '#size' => 10,
-      '#default_value' => isset($settings['separator_hours_hours']) ? $settings['separator_hours_hours'] : ' - ',
-      '#description' => t('This separator will be placed between the hours of a day.'),
-    );
-    $form['separator_more_hours'] = array(
-      '#type' => 'textfield',
-      '#size' => 10,
-      '#default_value' => isset($settings['separator_more_hours']) ? $settings['separator_more_hours'] : ', ',
-      '#description' => t('This separator will be placed between the hours and more_hours of a day.'),
-    );
+  $form['separator_days'] = array(
+    '#title' => t('Separators'),
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#default_value' => isset($settings['separator_days']) ? $settings['separator_days'] : ', ',
+    '#description' => t('This separator will be placed between the days. Use &#39&ltbr&gt&#39 to show each day on a new line.'),
+  );
+  $form['separator_grouped_days'] = array(
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#default_value' => isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ',
+    '#description' => t('This separator will be placed between the labels of grouped days.'),
+  );
+  $form['separator_day_hours'] = array(
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#default_value' => isset($settings['separator_day_hours']) ? $settings['separator_day_hours'] : ',',
+    '#description' => t('This separator will be placed between the day and the hours.'),
+  );
+  $form['separator_hours_hours'] = array(
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#default_value' => isset($settings['separator_hours_hours']) ? $settings['separator_hours_hours'] : ' - ',
+    '#description' => t('This separator will be placed between the hours of a day.'),
+  );
+  $form['separator_more_hours'] = array(
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#default_value' => isset($settings['separator_more_hours']) ? $settings['separator_more_hours'] : ', ',
+    '#description' => t('This separator will be placed between the hours and more_hours of a day.'),
+  );
 
   return $form;
 }
@@ -440,14 +446,6 @@ function office_hours_field_widget_info() {
 }
 
 /**
- * Implements FAPI hook_element_info().
- */
-function office_hours_element_info() {
-  module_load_include('inc', 'office_hours', 'office_hours.elements');
-  return _office_hours_elements();
-}
-
-/**
  * Implements hook_field_widget_form().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
@@ -468,10 +466,19 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
 }
 
 /**
-* Implements hook_field_widget_error().
-*/
+ * Implements hook_field_widget_error().
+ * This is necessary to show the errors thrown in hook_field_validate().
+ */
 function office_hours_field_widget_error($element, $error, $form, &$form_state) {
-  form_error($element['value'], $error['message']);
+  form_error($element, $error['message']);
+}
+
+/**
+ * Implements FAPI hook_element_info().
+ */
+function office_hours_element_info() {
+  module_load_include('inc', 'office_hours', 'office_hours.elements');
+  return _office_hours_elements();
 }
 
 /**
@@ -709,4 +716,3 @@ function _office_hours_views_field_views_data($field) {
     return array($table_alias => $data);
 */
 }
-
