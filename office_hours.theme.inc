@@ -34,6 +34,11 @@ function theme_office_hours_formatter_default($vars) {
   $settings = $vars['display']['settings'];
   $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
 
+  $settings['separator_grouped_days'] = isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ';
+
+  $show_closed = !empty($settings['showclosed']); // D7-version
+//  $show_closed = $field['showclosed']; // D6-version
+
   // Get the label per weekday.
   switch ($settings['daysformat']) {
     case 'long':
@@ -98,8 +103,8 @@ function theme_office_hours_formatter_default($vars) {
   }
 
   // Sort the days of the week again, because sorting is lost by adding the closed days.
-  // Do not sort by first_day_of_week for certain types: 'number'/'none' are more frequently used by machines/interfaces.
   ksort($items);
+  // Sort by first_day_of_week, except for certain types: 'number'/'none' are more frequently used by machines/interfaces.
   switch ($settings['daysformat']) {
     case 'long':
     case 'short':
@@ -114,7 +119,6 @@ function theme_office_hours_formatter_default($vars) {
   // Change label for grouped days.
   if ($settings['grouped']) {
     $group_id = '';
-    $settings['separator_grouped_days'] = isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ';
 
     foreach ($items as $day => $hours) {
       if ($group_id != $hours['group_id']) {
@@ -140,9 +144,10 @@ function theme_office_hours_formatter_default($vars) {
     $regular = '';
     $additional = '';
     if ( isset($hours[0]['closed']) ) {
-      if ( !empty($settings['showclosed']) ) {
+      if ( $show_closed ) {
         // Format the empty day with a text like 'Closed' or '00:00-00:00'
-        $closed = check_plain( t($settings['closedformat'] ) );
+          $closed = check_plain( t($settings['closedformat'] ) ); // D7-version
+//          $closed = $hours[0]['closed'] ; // D6-version
       }
       else {
         // Don't output unnecessary fields.
