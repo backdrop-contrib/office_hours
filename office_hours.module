@@ -101,32 +101,6 @@ function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
       $form[$key][$field['#language']] = $destArray;
     }
   }
-
-/*
-  if (is_object($field)) {
-    $fromArray = get_object_vars($field);
-    $lang = $fromArray['language'];
-    echo $lang;
-    if (isset($fromArray['field_hours'])) {
-      $destArray = $fromArray['field_hours'];
-      foreach (range(0, 13) as $value) {
-        $destArray[$lang][$value] = array('day' => $value, 'starthours' => NULL, 'endhours' => NULL);
-      }
-      foreach (range(0, 13) as $value) {
-        if (isset($fromArray['field_hours'][$lang][$value])) {
-          $day = $fromArray['field_hours'][$lang][$value]['day'];
-          if ($day != $value) {
-            $destArray[$lang][$day] = $fromArray['field_hours'][$lang][$value];
-          }
-          else {
-            $destArray[$lang][$value] = $fromArray['field_hours'][$lang][$value];
-          }
-        }
-      }
-      $field->field_hours = $destArray;
-    }
-  }
-*/
 }
 
 /**
@@ -453,14 +427,7 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
     '#type' => 'office_hours',
     '#default_value' => isset($items[$delta]['starthours']) ? $items[$delta] : NULL,
   );
-/*
-  $element = office_hours_field_process($element, $form_state, $form);
-  foreach($element as $key=>$elem) {
-  if ($key == 'starthours' or $key == 'endhours') {
-  $elem = office_hours_select_process($elem, $form_state, $form);
-  }
-  }
-*/
+
   return $element;
 }
 
@@ -476,8 +443,8 @@ function office_hours_field_widget_error($element, $error, $form, &$form_state) 
  * Implements FAPI hook_element_info().
  */
 function office_hours_element_info() {
-  module_load_include('inc', 'office_hours', 'office_hours.elements');
-  return _office_hours_elements();
+  module_load_include('elements.inc', 'office_hours');
+  return _office_hours_element_info();
 }
 
 /**
