@@ -4,27 +4,13 @@
  * Creates a field and widget for inserting working or office hours per day
  */
 
+// @TODO 2012-05-13: it would be nice to include this file in the .info-file, but the OH-block is lost after F5-page refresh.
 module_load_include('inc', 'office_hours', 'office_hours.theme');
-
-/**
- * Implements hook_field_update().
- */
-//function office_hours_field_update($entity_type, $entity, $field, $instance, $lang, $items) {
-//  $field_name = $field['field_name'];
-//  echo $field_name;
-//  if (empty($items)) {
-//    return;
-//  }
-//  $items = _office_hours_set_weight($items);
-//  $entity->{$field['field_name']}[$lang] = $items;
-//}
 
 /**
  * Implements hook_theme().
  */
 function office_hours_theme ($existing, $type, $theme, $path) {
-  module_load_include('inc', 'office_hours', 'office_hours.theme');
-
   $base = array(
     'file' => 'office_hours.theme.inc',
     'path' => "$path",
@@ -43,73 +29,21 @@ function office_hours_theme_registry_alter(&$theme_registry) {
 }
 
 /**
- * Implements hook_form_alter().
- */
-//function office_hours_form_alter(&$form, &$form_state, $form_id) {
-//}
-
-/**
  * Implements hook_form_FORM_ID_alter().
  */
 function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
-//if ($form_id == 'field_ui_field_edit_form') {
-    if ($form['#field']['type'] == 'office_hours') {
-      $description = t('14 hours blocks is the current default. See below for limiting it');
-      $description .= '<br/><strong>' . t('Warning! Changing this setting after data has been created could result in the loss of data!') . '</strong>';
-      $form['field']['cardinality'] = array(
-        '#type' => 'select',
-        '#title' => t('Number of values'),
-        '#options' => drupal_map_assoc(array(14)),
-        '#default_value' => 14,
-        '#description' => $description,
-      );
-    }
-//}
-}
-
-/**
- * @TODO: This Implementation of hook_form_alter() is not used in D7-version of module,
- *        due to the typo in the function name.
- */
-function office_hours_node_form_alter(&$form, &$form_state, $form_id) {
-  foreach ($form as $key => $field) {
-    if (is_array($field) && isset($field['#language'])
-    && is_array($field[$field['#language']])
-    && isset($field[$field['#language']][0]['#type'])
-    && $field[$field['#language']][0]['#type'] == 'office_hours') {
-      $form[$key]['#theme'] = 'office_hours_multiple_values';
-
-      $fromArray = $field[$field['#language']];
-      $destArray = $fromArray;
-
-      foreach (range(0, 13) as $value) {
-        $destArray[$value]['#default_value'] = array('day' => $value, 'starthours' => NULL, 'endhours' => NULL);
-      }
-      foreach (range(0, 13) as $value) {
-        if (isset($fromArray[$value]['#default_value'])) {
-          if ($fromArray[$value]['#default_value']['day'] != $value) {
-            $day = $fromArray[$value]['#default_value']['day'];
-            $destArray[$day] = $fromArray[$value];
-            $destArray[$day]['#weight'] = $day;
-            $destArray[$day]['#delta'] = $day;
-          }
-          else {
-            $destArray[$value] = $fromArray[$value];
-          }
-        }
-      }
-      $form[$key][$field['#language']] = $destArray;
-    }
+  if ($form['#field']['type'] == 'office_hours') {
+    $description = t('14 hours blocks is the current default. See below for limiting it');
+    $description .= '<br/><strong>' . t('Warning! Changing this setting after data has been created could result in the loss of data!') . '</strong>';
+    $form['field']['cardinality'] = array(
+      '#type' => 'select',
+      '#title' => t('Number of values'),
+      '#options' => drupal_map_assoc(array(14)),
+      '#default_value' => 14,
+      '#description' => $description,
+    );
   }
 }
-
-/**
- * Implements hook_init().
- */
-//function office_hours_init() {
-//  drupal_add_css(drupal_get_path('module', 'office_hours') . '/office_hours.css'); //D7: moved to info-file
-  //drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js', 'theme');
-//}
 
 /**
  * Implements hook_field_is_empty().
@@ -422,6 +356,13 @@ function office_hours_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  if ($delta == 0) {
+    // This function is called 14 times for each block. We only need to include files once, not 14 times.
+    // @TODO: perhaps it is even better to include it in office_hours_field_multiple_value_form(), which is only called once per page.
+    module_load_include('elements.inc', 'office_hours');
+    drupal_add_js(drupal_get_path('module', 'office_hours') . "/office_hours.js", 'file');
+  }
+
   $items = _office_hours_arrange_items($items);
   $element += array(
     '#type' => 'office_hours',
@@ -443,8 +384,23 @@ function office_hours_field_widget_error($element, $error, $form, &$form_state) 
  * Implements FAPI hook_element_info().
  */
 function office_hours_element_info() {
-  module_load_include('elements.inc', 'office_hours');
-  return _office_hours_element_info();
+  return array(
+    'office_hours' => array(
+      '#input' => TRUE,
+      '#tree' => TRUE,
+      '#columns' => array('day', 'starthours', 'endhours'),
+      '#process' => array('_office_hours_field_process'),
+      '#element_validate' => array('_office_hours_field_validate'),
+      '#theme' => 'office_hours',
+    ),
+    'office_hours_select' => array(
+      '#input' => TRUE,
+      '#tree' => TRUE,
+      '#process' => array('_office_hours_select_process'),
+      '#element_validate' => array('_office_hours_select_validate'),
+      '#theme' => 'office_hours_select',
+    ),
+  );
 }
 
 /**

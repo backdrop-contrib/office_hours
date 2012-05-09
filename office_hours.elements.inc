@@ -7,46 +7,12 @@
  */
 
 /**
- * Implements a subfunction of hook_element_info().
- */
-function _office_hours_element_info() {
-  return array(
-    'office_hours' => array(
-      '#input' => TRUE,
-      '#tree' => TRUE,
-      '#columns' => array('day', 'starthours', 'endhours'),
-      '#process' => array('_office_hours_field_process'),
-      '#element_validate' => array('_office_hours_field_validate'),
-      '#theme' => 'office_hours',
-    ),
-    'office_hours_select' => array(
-      '#input' => TRUE,
-      '#tree' => TRUE,
-      '#process' => array('_office_hours_select_process'),
-      '#element_validate' => array('_office_hours_select_validate'),
-      '#theme' => 'office_hours_select',
-    ),
-  );
-}
-
-/*
-function office_hours_field_preprocess($vars) {
-}
-*/
-
-/**
  * Process an individual element.
  *
  * Build the form element. When creating a form using FAPI #process,
  * note that $element['#value'] is already set.
- * D6: the $fields array is in $form['#field_info'][$element['#field_name']].
- * D7: the $fields array is in $form_state['field'][$element['#field_name']][$element['#language']]['field']
- * @TODO: see the following page for optimized JS-loading: 
- *        http://api.drupal.org/api/drupal/includes%21common.inc/function/drupal_add_js/7
  */
 function _office_hours_field_process($element, &$form_state, $form) {
-  drupal_add_js(drupal_get_path('module', 'office_hours') . "/office_hours.js", 'file');
-
   $field_settings = _office_hours_get_field_settings($element, $form_state);
 
   $day = $element['#weight'];
@@ -143,8 +109,6 @@ function _office_hours_select_process($element, &$form_state, $form) {
  * Validate the hours selector element.
  */
 function _office_hours_select_validate($element, &$form_state) {
-  //$hour = $element['#value']['hours'];
-  //$minutes = ($element['#value']['minutes'] == 0) ? '00' : $element['#value']['minutes'];
   $hour = $element['hours']['#value'];
   $minutes = ($element['minutes']['#value'] == 0) ? '00' : $element['minutes']['#value'];
   if ($element['#hoursformat']) {
@@ -239,4 +203,3 @@ function _office_hours_get_field_settings($element, &$form_state) {
   }
   return $field_settings;
 }
-
