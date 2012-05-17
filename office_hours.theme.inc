@@ -37,9 +37,10 @@ function theme_office_hours_formatter_default($vars) {
   $settings['separator_grouped_days'] = isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ';
 
   $show_closed = !empty($settings['showclosed']); // D7-version
-//  $show_closed = $field['showclosed']; // D6-version
+  //  $show_closed = $field['showclosed']; // D6-version
 
   // Get the label per weekday.
+  $settings['daysformat']= (isset($settings['daysformat'])) ? $settings['daysformat'] : 'none';
   switch ($settings['daysformat']) {
     case 'long':
       $weekdays = date_week_days(TRUE);
@@ -75,7 +76,8 @@ function theme_office_hours_formatter_default($vars) {
       $max_label_length = max( $max_label_length, strlen($items[$day]['label']));
 
       // Add group_id to group days with equal hours.
-      if ($settings['grouped']) {
+      
+      if (!empty($settings['grouped'])) {
         $group_id = "$strhrs::$endhrs";
         if (!isset ($items[$day]['group_id'])) {
           $items[$day]['group_id'] = $group_id;
@@ -95,7 +97,7 @@ function theme_office_hours_formatter_default($vars) {
       $max_label_length = max($max_label_length, strlen($items[$day]['label']));
 
       // Add group_id for closed days
-      if ($settings['grouped']) {
+      if (!empty($settings['grouped'])) {
         $group_id = 'closed';
         $items[$day]['group_id'] = $group_id;
       }
@@ -117,7 +119,7 @@ function theme_office_hours_formatter_default($vars) {
   }
 
   // Change label for grouped days.
-  if ($settings['grouped']) {
+  if (!empty($settings['grouped'])) {
     $group_id = '';
 
     foreach ($items as $day => $hours) {
@@ -139,6 +141,8 @@ function theme_office_hours_formatter_default($vars) {
   // Finally, generate the formatter output.
   $output = '';
   $values = array();
+  $separator_hours = !empty($settings['separator_hours_hours']) ? $settings['separator_hours_hours'] : '';  
+  $separator_days = !empty($settings['separator_days']) ? $settings['separator_days'] : '';
   foreach ($items as $day => $hours) {
     $closed = '';
     $regular = '';
@@ -160,14 +164,14 @@ function theme_office_hours_formatter_default($vars) {
         if (!$settings['compress']) {
           $strhrs2 = $hours[1]['strhrs'];
           $endhrs2 = $hours[1]['endhrs'];
-          $additional = $settings['separator_more_hours'] . $strhrs2 . $settings['separator_hours_hours'] . $endhrs2;
+          $additional = $settings['separator_more_hours'] . $strhrs2 . $separator_hours . $endhrs2;
         }
         else {
           // Override endhours of morning with endhours of evening.
           $endhrs1 = $hours[1]['endhrs'];
         }
       }
-      $regular = $strhrs1 . $settings['separator_hours_hours'] . $endhrs1;
+      $regular = $strhrs1 . $separator_hours . $endhrs1;
     }
 
     $output_hours = $closed . $regular . $additional;
@@ -186,7 +190,7 @@ function theme_office_hours_formatter_default($vars) {
       else {
         $output .= '<span class="oh-display-hours">'
                  .   $closed . $regular . $additional
-                 .   $settings['separator_days']
+                 .   $separator_days
                  . '</span>';
 
       }
