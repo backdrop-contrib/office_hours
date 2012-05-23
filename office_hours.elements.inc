@@ -45,6 +45,8 @@ function _office_hours_field_process($element, &$form_state, $form) {
     '#default_hours' => isset($element['#value'][$field_strhrs]) ? $element['#value'][$field_strhrs] : '' ,
     '#granularity' => $field_settings['granularity'],
     '#hoursformat' => $field_settings['hoursformat'],
+    '#limitstart' => $field_settings['limitstart'],
+    '#limitend' => $field_settings['limitend'],
   );
   $element[$field_endhrs] = array(
     '#type' => 'office_hours_select',
@@ -52,6 +54,9 @@ function _office_hours_field_process($element, &$form_state, $form) {
     '#default_hours' => isset($element['#value'][$field_endhrs]) ? $element['#value'][$field_endhrs] : '',
     '#granularity' => $field_settings['granularity'],
     '#hoursformat' => $field_settings['hoursformat'],
+    '#limitstart' => $field_settings['limitstart'],
+    '#limitend' => $field_settings['limitend'],
+
   );
 
   return $element;
@@ -61,27 +66,12 @@ function _office_hours_field_process($element, &$form_state, $form) {
  * Process the hours selector element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
-  $ampm = 'am';
-  $defhr = '';
-  $defmin = '';
-  if (is_numeric($element['#default_hours'])) {
-    $hour = _office_hours_mil_to_tf($element['#default_hours']);
-    list($defhr, $defmin) = explode(":", $hour);
-    if ($element['#hoursformat']) {
-      if ($defhr >= 12) {
-        $defhr -= ($defhr != 12) ? 12 : 0;
-        $ampm = 'pm';
-      }
-      elseif ($defhr == 0) {
-        $defhr +=12;
-      }
-    }
-    else {
-      $defhr = str_pad($defhr, 2, '0', STR_PAD_LEFT);
-    }
+    if (is_numeric($element['#default_hours'])) {
+    list($defhr,$defmin,$ampm) = _office_hours_return_defaults($element['#default_hours'], $element['#hoursformat']); 
   }
 
   $hours = ($element['#hoursformat'] == 1) ? date_hours('g') : date_hours('H');
+  $hours = _office_hours_limit_hours($hours,$element['#limitstart'],$element['#limitend']);
   $minutes = date_minutes('i', FALSE, $element['#granularity']);
 
   $element['hours'] = array(
@@ -95,6 +85,7 @@ function _office_hours_select_process($element, &$form_state, $form) {
     '#options' => drupal_map_assoc($minutes),
     '#default_value' => isset($defmin) ? $defmin : '',
   );
+
   if ($element['#hoursformat'] == 1) {
     $element['ampm'] = array(
       '#type' => 'select',

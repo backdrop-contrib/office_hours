@@ -6,6 +6,7 @@
 
 // @TODO 2012-05-13: it would be nice to include this file in the .info-file, but the OH-block is lost after F5-page refresh.
 module_load_include('inc', 'office_hours', 'office_hours.theme');
+module_load_include('elements.inc', 'office_hours');
 
 /**
  * Implements hook_theme().
@@ -114,32 +115,23 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#default_value' => isset($settings['valhrs']) ? $settings['valhrs'] : 0,
     '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
   );
+
   $form['limitstart'] = array(
-    '#type' => 'office_hours_select',
-    '#title' => t('Limit widget start hours'),
-    '#default_hours' => isset($settings['limitstart']) ? $settings['limitstart'] : '',
-    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
-    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
-    '#prefix' => '<div class="office-hours-block" style="display:inline">' . t('from'),
-  );
-  $form['limitend'] = array(
-    '#type' => 'office_hours_select',
-    '#title' => t('Limit widget end hours'),
-    '#default_hours' => isset($settings['limitend']) ? $settings['limitend'] : '',
-    '#granularity' => isset($settings['granularity']) ? $settings['granularity'] : '60',
-    '#hoursformat' => isset($settings['hoursformat']) ? $settings['hoursformat'] : '0',
-    '#prefix' => t('until'),
-    '#suffix' => '</div>',
+    '#type' => 'select',
+    '#title' => t('Limit widget hours - start from'),
+    '#description' => t('Restrict the hours available - select options will start from this hour'),
+    '#default_value' => !empty($settings['limitstart']) ? $settings['limitstart'] : '',
+    '#options' => _office_hours_show_ampm(date_hours('H')),
   );
 
-// The following settings are moved from the Widget settings to the Formatter settings.
-//  $form['showclosed'] = array(
-//    '#type' => 'checkbox',
-//    '#title' => t('Show empty days'),
-//    '#required' => FALSE,
-//    '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : 0,
-//    '#description' => t('Show empty days on the node.'),
-//  );
+  $form['limitend'] = array(
+    '#type' => 'select',
+    '#title' => t('Limit widget hours - until'),
+    '#description' => t('Restrict the hours available - select options will end at this hour'),
+    '#default_value' => !empty($settings['limitend']) ? $settings['limitend'] : '',
+    '#options' => _office_hours_show_ampm(date_hours('H')),
+  );
+
   return $form;
 }
 
@@ -149,22 +141,9 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
  * "Please note that this will work as long as the opening hours are not through midnight."
  */
 function _office_hours_field_settings_form_validate($element, &$form_state) {
-  if (office_hours_select_is_empty($element['limitstart']['#value'], NULL) ||
-      office_hours_select_is_empty($element['limitend']['#value'], NULL) ) {
-    // It is OK to set only from- or only to- hours.
-  }
-  elseif ($element['limitstart']['#value']['hours'] < $element['limitend']['#value']['hours']) {
-    // OK
-  }
-  elseif ($element['limitstart']['#value']['hours'] > $element['limitend']['#value']['hours']) {
+  if ($element['limitstart']['#value'] > $element['limitend']['#value']) {
     form_error($element['limitstart'], t('%start is later then %end.', array('%start' => $element['limitstart']['#title'], '%end' => $element['limitend']['#title'] )));
   }
-  elseif ($element['limitstart']['#value']['minutes'] > $element['limitend']['#value']['minutes']) {
-    form_error($element['limitstart'], t('%start is later then %end.', array('%start' => $element['limitstart']['#title'], '%end' => $element['limitend']['#title'] )));
-  }
-
-  // You can update the values of the settings here too.
-//  form_set_value($element['limitstart'], $new_value, $form_state);
 }
 
 /**
@@ -189,8 +168,8 @@ function office_hours_field_schema($field) {
  *
  * Is not implemented: the validation is done in the element callback: office_hours_validate().
  */
-//function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
-//}
+/*function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+}*
 
 /**
  * Implements hook_field_formatter_info().
@@ -359,7 +338,6 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
   if ($delta == 0) {
     // This function is called 14 times for each block. We only need to include files once, not 14 times.
     // @TODO: perhaps it is even better to include it in office_hours_field_multiple_value_form(), which is only called once per page.
-    module_load_include('elements.inc', 'office_hours');
     drupal_add_js(drupal_get_path('module', 'office_hours') . "/office_hours.js", 'file');
   }
 
@@ -413,6 +391,25 @@ function office_hours_views_api() {
   );
 }
 
+function _office_hours_show_ampm($hours) {
+  foreach($hours as $key=> $hour) {
+   if (!empty($hour)) {
+      $hours[$key] = $hour. ":00 ("._office_hours_convert_to_ampm($hour).")";
+    }
+  }
+  return $hours;
+}
+
+function _office_hours_limit_hours($hours, $limitstart=0,$limitend=25) {
+  $limitedhours[] = '';
+  foreach($hours as $key=> $hour) {
+   if ($hour>=$limitstart && $hour<=$limitend) {
+      $limitedhours[$key] = $hour;
+    }
+  }
+  return $limitedhours;
+}
+
 function _office_hours_arrange_items($items) {
   $days = array();
   foreach ($items as $item) {
@@ -461,6 +458,27 @@ function _office_hours_convert_to_ampm($hour) {
   return $hr . ':' . $min . $ampm;
 }
 
+function _office_hours_return_defaults($default, $format = 0) {
+  $ampm = 'am';
+  $defhr = '';
+  $defmin = '';
+  $hour = _office_hours_mil_to_tf($default);
+  list($defhr, $defmin) = explode(":", $hour);
+  if ($format) {
+    if ($defhr >= 12) {
+      $defhr -= ($defhr != 12) ? 12 : 0;
+      $ampm = 'pm';
+    }
+    elseif ($defhr == 0) {
+      $defhr +=12;
+    }
+  }
+  else {
+    $defhr = str_pad($defhr, 2, '0', STR_PAD_LEFT);
+  }
+  return array($defhr,$defmin,$ampm);
+}
+
 function _office_hours_tf_to_mil($hour) {
   if (strstr($hour, ':') == FALSE || is_null($hour)) {
     return $hour;
@@ -471,6 +489,7 @@ function _office_hours_tf_to_mil($hour) {
 }
 
 function _office_hours_mil_to_tf($time = '') {
+  if (strlen($time) == 2) $time = $time.'00';
   $hour = (substr($time, 0, -2)) ? substr($time, 0, -2): '0';
   $min = (substr($time, -2)) ? substr($time, -2): '00';
   return $hour . ":" . $min;
