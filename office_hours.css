@@ -6,7 +6,8 @@
 }
 
 .oh-display-label {
-  display: inline-block; // give each label the same width, to align the hours.
+  display: inline-block; /* give each label the same width, to align the hours. */
+  min-width: 9em;
 }
 
 .oh-display-hours {
