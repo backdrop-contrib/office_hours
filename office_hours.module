@@ -180,26 +180,14 @@ function office_hours_field_formatter_info() {
       'label' => 'Office hours',
       'field types' =>  array('office_hours_formatter_default', 'office_hours', 'office_hours_multiple_values', 'office_hours_select'),
       'multiple values' => FIELD_BEHAVIOR_DEFAULT,
-      'settings' => array(
-        'daysformat' => 'long',
-        'hoursformat' => 0, // '12'/'24'/'HH:mm',
-        'compress' => FALSE,
-        'grouped' => FALSE,
-        'showclosed' => FALSE,
-        'closedformat' => 'Closed',   // The html-string for closed/empty days.
-        'separator_days' => '<br>',
-        'separator_grouped_days' => ' - ',
-        'separator_day_hours' => ': ',
-        'separator_hours_hours' => '-',
-        'separator_more_hours' => ', ',
-      ),
+      'settings' => _office_hours_field_formatter_defaults(),
     ),
   );
 }
 
 function office_hours_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
   $display = $instance['display'][$view_mode];
-  $settings = $instance['display'][$view_mode]['settings'];
+  $settings = _office_hours_field_formatter_defaults($instance['display'][$view_mode]['settings']);
 
   $form = array();
 
@@ -217,7 +205,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#type' => 'select',
     '#title' => t('Day notation'),
     '#options' => array('long' => t('long'), 'short' => t('short'), 'number' => t('number'), 'none' => t('none')),
-    '#default_value' => isset($settings['daysformat']) ? $settings['daysformat'] : 'long',
+    '#default_value' => $settings['daysformat'],
     '#description' => t('Display the day.'),
   );
 
@@ -225,7 +213,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#type' => 'select',
     '#title' => t('Hours format'),
     '#options' => array(0 => t('24 hrs'), 1 => t('12 hrs')),
-    '#default_value' => isset($settings['hoursformat']) ? $settings['hoursformat'] : 0,
+    '#default_value' => $settings['hoursformat'],
     '#required' => FALSE,
     '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
   );
@@ -233,7 +221,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   $form['compress'] = array(
     '#title' => t('Compress Hours + More hours into one set'),
     '#type' => 'checkbox',
-    '#default_value' => isset($settings['compress']) ? $settings['compress'] : FALSE,
+    '#default_value' => $settings['compress'],
     '#description' => t('Even if more hours is allowed, you might want to show a compressed form. E.g.,  7:00-12:00, 13:30-19:00 becomes 7:00-19:00.'),
     '#required' => FALSE,
   );
@@ -241,7 +229,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   $form['grouped'] = array(
     '#title' => t('Group consecutive days with same hours into one set'),
     '#type' => 'checkbox',
-    '#default_value' => isset($settings['grouped']) ? $settings['grouped'] : FALSE,
+    '#default_value' => $settings['grouped'],
     '#description' => t('E.g., Mon: 7:00-19:00; Tue: 7:00-19:00 becomes Mon-Tue: 7:00-19:00'),
     '#required' => FALSE,
   );
@@ -250,14 +238,14 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#type' => 'checkbox',
     '#title' => t('Show empty days'),
     '#required' => FALSE,
-    '#default_value' => isset($settings['showclosed']) ? $settings['showclosed'] : FALSE,
+    '#default_value' => $settings['showclosed'],
     '#description' => t('Show empty days on the field.'),
   );
   $form['closedformat'] = array(
     '#type' => 'textfield',
     '#size' => 30,
     '#title' => t('Empty days notation'),
-    '#default_value' => isset($settings['closedformat']) ? $settings['closedformat'] : 'Closed',
+    '#default_value' => $settings['closedformat'],
     '#required' => FALSE,
     '#description' => t('Format of empty days. You can use translatable text (do not use quotes) and HTML in this field.'),
   );
@@ -267,31 +255,31 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#title' => t('Separators'),
     '#type' => 'textfield',
     '#size' => 10,
-    '#default_value' => isset($settings['separator_days']) ? $settings['separator_days'] : ', ',
+    '#default_value' => $settings['separator_days'],
     '#description' => t('This separator will be placed between the days. Use &#39&ltbr&gt&#39 to show each day on a new line.'),
   );
   $form['separator_grouped_days'] = array(
     '#type' => 'textfield',
     '#size' => 10,
-    '#default_value' => isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ',
+    '#default_value' => $settings['separator_grouped_days'],
     '#description' => t('This separator will be placed between the labels of grouped days.'),
   );
   $form['separator_day_hours'] = array(
     '#type' => 'textfield',
     '#size' => 10,
-    '#default_value' => isset($settings['separator_day_hours']) ? $settings['separator_day_hours'] : ',',
+    '#default_value' => $settings['separator_day_hours'],
     '#description' => t('This separator will be placed between the day and the hours.'),
   );
   $form['separator_hours_hours'] = array(
     '#type' => 'textfield',
     '#size' => 10,
-    '#default_value' => isset($settings['separator_hours_hours']) ? $settings['separator_hours_hours'] : ' - ',
+    '#default_value' => $settings['separator_hours_hours'],
     '#description' => t('This separator will be placed between the hours of a day.'),
   );
   $form['separator_more_hours'] = array(
     '#type' => 'textfield',
     '#size' => 10,
-    '#default_value' => isset($settings['separator_more_hours']) ? $settings['separator_more_hours'] : ', ',
+    '#default_value' => $settings['separator_more_hours'],
     '#description' => t('This separator will be placed between the hours and more_hours of a day.'),
   );
 
@@ -311,7 +299,6 @@ function office_hours_field_formatter_settings_summary($field, $instance, $view_
 
   $summary[] = t('Display Office hours in different formats.');
 
-//  return $summary;
   return implode('<br />', $summary);
 }
 
@@ -520,6 +507,22 @@ function _office_hours_set_weight($items) {
     }
   }
   return $sorted;
+}
+
+function _office_hours_field_formatter_defaults($settings = array()) {
+  return array_merge(array(
+    'daysformat' => 'long',
+    'hoursformat' => 0, // '12'/'24'/'HH:mm',
+    'compress' => FALSE,
+    'grouped' => FALSE,
+    'showclosed' => FALSE,
+    'closedformat' => 'Closed',   // The html-string for closed/empty days.
+    'separator_days' => '<br>',
+    'separator_grouped_days' => ' - ',
+    'separator_day_hours' => ': ',
+    'separator_hours_hours' => '-',
+    'separator_more_hours' => ', ',  
+  ), $settings);
 }
 
 function office_hours_field_views_data($field) {
