@@ -24,7 +24,7 @@ function _office_hours_field_process($element, &$form_state, $form) {
   $days = date_week_days_untranslated();
 
   if (!($element['#weight'] & 1)) { //first cell
-    $element['#prefix'] = '<div class="office-hours-block"><div class="dayname">' . $days[$day] . '</div>';
+    $element['#prefix'] = '<div class="office-hours-block"><div class="dayname">' . t($days[$day]) . '</div>';
   }
   elseif ($field_settings['addhrs']) {  // second cell, we're supposed to show the 'add hours link'
     $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link'))) . '<div class="office-hours-block" style = "display:none;">' . '<div class="dayname">' . t('and') . '</div>';
