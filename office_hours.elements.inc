@@ -44,6 +44,7 @@ function _office_hours_field_process($element, &$form_state, $form) {
     '#prefix' => t(' from'),
     '#default_hours' => isset($element['#value'][$field_strhrs]) ? $element['#value'][$field_strhrs] : '' ,
     '#granularity' => $field_settings['granularity'],
+    '#valhrs' => $field_settings['valhrs'],
     '#hoursformat' => $field_settings['hoursformat'],
     '#limitstart' => $field_settings['limitstart'],
     '#limitend' => $field_settings['limitend'],
@@ -53,6 +54,7 @@ function _office_hours_field_process($element, &$form_state, $form) {
     '#prefix' => t('until'),
     '#default_hours' => isset($element['#value'][$field_endhrs]) ? $element['#value'][$field_endhrs] : '',
     '#granularity' => $field_settings['granularity'],
+    '#valhrs' => $field_settings['valhrs'],
     '#hoursformat' => $field_settings['hoursformat'],
     '#limitstart' => $field_settings['limitstart'],
     '#limitend' => $field_settings['limitend'],
@@ -151,17 +153,18 @@ function _office_hours_field_validate($element, &$form_state) {
 
   $error_text = '';
   if (empty($item['starthours']) && empty($item['endhours']) ) {
-    // This is OK.
+    //This is OK.
   }
   elseif (!empty($item['starthours']) xor !empty($item['endhours']) ) {
-//  $error_text = 'Both Opening hours and Closing hours must be set.';
+    //  $error_text = 'Both Opening hours and Closing hours must be set.';
   }
   elseif ($item['starthours'] > $item['endhours'] ) {
     $error_text = 'Closing hours are earlier than opening hours.';
   }
   elseif (!empty($field_settings['limitstart']) && !empty($field_settings['limitend'])) {
-    if ($field_settings['limitstart'] > $item['starthours'] 
-        ||  $field_settings['limitend'] < $item['endhours']) {
+    $starthours = (int) substr($item['starthours'],0,2);
+    $endhours = (int )substr($item['endhours'],0,2);
+    if ($field_settings['limitstart'] > $starthours ||  $field_settings['limitend'] < $endhours) {
       $error_text = 'Opening hours are outside limits' . ' (' . $field_settings['limitstart'] . ' - ' . $field_settings['limitend'] .').';
     }
   }
