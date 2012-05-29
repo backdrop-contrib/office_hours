@@ -68,12 +68,14 @@ function _office_hours_field_process($element, &$form_state, $form) {
  * Process the hours selector element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
-    if (is_numeric($element['#default_hours'])) {
-    list($defhr,$defmin,$ampm) = _office_hours_return_defaults($element['#default_hours'], $element['#hoursformat']); 
+  if (is_numeric($element['#default_hours'])) {
+    list($defhr, $defmin, $ampm) = _office_hours_return_defaults($element['#default_hours'], $element['#hoursformat']); 
   }
 
   $hours = ($element['#hoursformat'] == 1) ? date_hours('g') : date_hours('H');
-  $hours = _office_hours_limit_hours($hours,$element['#limitstart'],$element['#limitend']);
+  if (!empty($element['#valhrs']) && !empty($element['#limitend']) ) {
+    $hours = _office_hours_limit_hours($hours, $element['#limitstart'], $element['#limitend']);
+  }
   $minutes = date_minutes('i', FALSE, $element['#granularity']);
 
   $element['hours'] = array(
