@@ -79,13 +79,13 @@ function _office_hours_select_process($element, &$form_state, $form) {
   $element['hours'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($hours),
-    '#default_value' => isset($defhr) ? $defhr : 0,
+    '#default_value' => $defhr,
   );
 
   $element['minutes'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($minutes),
-    '#default_value' => isset($defmin) ? $defmin : '',
+    '#default_value' => $defmin,
   );
 
   if ($element['#hoursformat'] == 1) {
