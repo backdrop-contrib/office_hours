@@ -1,8 +1,9 @@
 <?php
 
 /**
- * @file office_hours.elements.inc
+ * @file
  * Office hours form elements and their theming and validation.
+ *
  * This file is only included during the edit process to reduce memory usage.
  */
 
@@ -68,15 +69,12 @@ function _office_hours_field_process($element, &$form_state, $form) {
  * Process the hours selector element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
-  if (is_numeric($element['#default_hours'])) {
-    list($defhr, $defmin, $ampm) = _office_hours_return_defaults($element['#default_hours'], $element['#hoursformat']); 
-  }
-
+  list($defhr, $defmin, $ampm) = _office_hours_return_defaults($element['#default_hours'], $element['#hoursformat']);
+  $minutes = date_minutes('i', FALSE, $element['#granularity']);
   $hours = ($element['#hoursformat'] == 1) ? date_hours('g') : date_hours('H');
-  if (!empty($element['#valhrs']) && !empty($element['#limitend']) ) {
+  if (!empty($element['#limitstart']) || !empty($element['#limitend']) ) {
     $hours = _office_hours_limit_hours($hours, $element['#limitstart'], $element['#limitend']);
   }
-  $minutes = date_minutes('i', FALSE, $element['#granularity']);
 
   $element['hours'] = array(
     '#type' => 'select',
@@ -106,6 +104,7 @@ function _office_hours_select_process($element, &$form_state, $form) {
 function _office_hours_select_validate($element, &$form_state) {
   $hour = $element['hours']['#value'];
   $minutes = ($element['minutes']['#value'] == 0) ? '00' : $element['minutes']['#value'];
+
   if ($element['#hoursformat']) {
     if ($element['ampm']['#value'] == 'pm' && $hour < 12) $hour += 12;
     if ($element['ampm']['#value'] == 'am' && $hour == 12) $hour = '00';
@@ -114,7 +113,7 @@ function _office_hours_select_validate($element, &$form_state) {
     form_set_value($element, (string)$hour . $minutes, $form_state);
   }
   else {
-     form_set_value($element, '', $form_state);
+    form_set_value($element, '', $form_state);
   }
   if ($hour < 0 || $hour > 23) {
     form_error($element, t('Hours should be between 0 and 23.'));
@@ -129,14 +128,14 @@ function _office_hours_select_validate($element, &$form_state) {
  */
 function office_hours_select_is_empty($item, $field) {
   if ( ( $item['hours']   == '' || $item['hours']   == '00' )
-     &&( $item['minutes'] == '' || $item['minutes'] == '00' ) ) {
+    && ( $item['minutes'] == '' || $item['minutes'] == '00' ) ) {
     return TRUE;
   }
   return FALSE;
 }
 
 /**
- * Implements a callback for _office_hours_elements() 
+ * Implements a callback for _office_hours_elements()
  * which defines the 'office_hours' (day) and 'office_hours_select' (hour) elements.
  *
  * You can find the value in $element['#value'], but better in $form_state['values'],
@@ -145,29 +144,21 @@ function office_hours_select_is_empty($item, $field) {
 function _office_hours_field_validate($element, &$form_state) {
   $field_settings = _office_hours_get_field_settings($element, $form_state);
 
-  // Only if 'Validate hours' is set in field settings.
-  if (!$field_settings['valhrs']) {
-    return;
-  }
-
   $delta = $element['#delta'];
   $item = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
 
   $error_text = '';
-  if (empty($item['starthours']) && empty($item['endhours']) ) {
-    //This is OK.
+  if (!empty($item['starthours']) xor !empty($item['endhours']) ) {
+    $error_text = 'Both Opening hours and Closing hours must be set.';
   }
-  elseif (!empty($item['starthours']) xor !empty($item['endhours']) ) {
-    //  $error_text = 'Both Opening hours and Closing hours must be set.';
-  }
-  elseif ($item['starthours'] > $item['endhours'] ) {
+  elseif ( ($field_settings['valhrs']) && ($item['starthours'] > $item['endhours']) ) {
     $error_text = 'Closing hours are earlier than opening hours.';
   }
-  elseif (!empty($field_settings['limitstart']) && !empty($field_settings['limitend'])) {
-    $starthours = (int) substr($item['starthours'],0,2);
-    $endhours = (int )substr($item['endhours'],0,2);
-    if ($field_settings['limitstart'] > $starthours ||  $field_settings['limitend'] < $endhours) {
-      $error_text = 'Opening hours are outside limits' . ' (' . $field_settings['limitstart'] . ' - ' . $field_settings['limitend'] .').';
+  elseif (!empty($field_settings['limitstart']) || !empty($field_settings['limitend'])) {
+    $starthours = (int) substr($item['starthours'], 0, 2);
+    $endhours = (int) substr($item['endhours'], 0, 2);
+    if ( ($starthours && $field_settings['limitstart'] > $starthours) || ($endhours && $field_settings['limitend'] < $endhours) ) {
+      $error_text = 'Opening hours are outside limits' . ' (' . $field_settings['limitstart'] . ' - ' . $field_settings['limitend'] . ').';
     }
   }
 
@@ -175,7 +166,7 @@ function _office_hours_field_validate($element, &$form_state) {
     $weekdays = date_week_days(TRUE);
     $error_text  = t($weekdays[$delta / 2]) . ': ' . t($error_text);
 
-    form_error($element, $error_text);
+    form_error($element, check_plain($error_text));
   }
 }
 
@@ -185,7 +176,7 @@ function _office_hours_field_validate($element, &$form_state) {
 function _office_hours_get_field_settings($element, &$form_state) {
   if (isset( $form_state['field'][$element['#field_name']]) ) {
     $field_settings = &$form_state['field'][$element['#field_name']][$element['#language']]['field']['settings'];
-  } 
+  }
   else {
     // This is to cater for the Profile2 edit page.
     $parents = array_slice($element['#array_parents'], 2, -1);

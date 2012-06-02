@@ -113,7 +113,7 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#title' => t('Validate hours'),
     '#required' => FALSE,
     '#default_value' => isset($settings['valhrs']) ? $settings['valhrs'] : 0,
-    '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
+    '#description' => t('Assure that endhours are later then starthours. Please note that this will work as long as the opening hours are not through midnight.'),
   );
 
   $form['limitstart'] = array(
@@ -387,10 +387,10 @@ function _office_hours_show_ampm($hours) {
   return $hours;
 }
 
-function _office_hours_limit_hours($hours, $limitstart=0,$limitend=25) {
+function _office_hours_limit_hours($hours, $limitstart=0, $limitend=25) {
   $limitedhours[] = '';
-  foreach($hours as $key=> $hour) {
-   if ($hour>=$limitstart && $hour<=$limitend) {
+  foreach($hours as $key => $hour) {
+   if ($hour >= $limitstart && $hour <= $limitend) {
       $limitedhours[$key] = $hour;
     }
   }
@@ -449,8 +449,13 @@ function _office_hours_return_defaults($default, $format = 0) {
   $ampm = 'am';
   $defhr = '';
   $defmin = '';
+  if (!is_numeric($default)) {
+    return array($defhr, $defmin, $ampm);
+  }
+
   $hour = _office_hours_mil_to_tf($default);
   list($defhr, $defmin) = explode(":", $hour);
+
   if ($format) {
     if ($defhr >= 12) {
       $defhr -= ($defhr != 12) ? 12 : 0;
@@ -463,7 +468,7 @@ function _office_hours_return_defaults($default, $format = 0) {
   else {
     $defhr = str_pad($defhr, 2, '0', STR_PAD_LEFT);
   }
-  return array($defhr,$defmin,$ampm);
+  return array($defhr, $defmin, $ampm);
 }
 
 function _office_hours_tf_to_mil($hour) {
