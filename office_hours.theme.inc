@@ -32,7 +32,6 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
 function theme_office_hours_formatter_default($vars) {
   $element = $vars['element'];
   $settings = $vars['display']['settings'];
-  $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
 
   $settings['separator_grouped_days'] = isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ';
 
@@ -73,7 +72,6 @@ function theme_office_hours_formatter_default($vars) {
 
       $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; // We're aggregating hours for days together.
       $items[$day]['label'] = $weekdays[$day];
-      $max_label_length = max( $max_label_length, strlen($items[$day]['label']));
 
       // Add group_id to group days with equal hours.
       
@@ -94,7 +92,6 @@ function theme_office_hours_formatter_default($vars) {
     if (!array_key_exists($day, $items)) {
       $items[$day][]= array('closed' => 'closed'); //silly, but we need this as an array because we can't use a string offset later
       $items[$day]['label'] = $weekdays[$day];
-      $max_label_length = max($max_label_length, strlen($items[$day]['label']));
 
       // Add group_id for closed days
       if (!empty($settings['grouped'])) {
@@ -131,7 +128,6 @@ function theme_office_hours_formatter_default($vars) {
       else {
         // second, third day of group: adjust the label of this group to e.g. 'mon-wed'
         $items[$day]['label'] = $group_from_label . $settings['separator_grouped_days'] . $hours['label'];
-        $max_label_length = max($max_label_length, strlen($items[$day]['label']));
         // delete previous item of this group, so it will not be shown.
         unset ($items[$day-1]);
       }
@@ -143,6 +139,13 @@ function theme_office_hours_formatter_default($vars) {
   $values = array();
   $separator_hours = !empty($settings['separator_hours_hours']) ? $settings['separator_hours_hours'] : '';  
   $separator_days = !empty($settings['separator_days']) ? $settings['separator_days'] : '';
+
+  $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
+  foreach ($items as $day => $hours) {
+    $max_label_length = max($max_label_length, strlen($hours['label']));
+  }
+  $max_label_length += strlen($settings['separator_day_hours']); // correction for suffix
+
   foreach ($items as $day => $hours) {
     $closed = '';
     $regular = '';
