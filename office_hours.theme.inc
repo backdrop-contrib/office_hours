@@ -6,202 +6,70 @@
  */
 
 /**
- * Theme function for 'default' text field formatter.
- */
-function office_hours_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $element = array();
-  if ($items) {
-    $element[0] = array('#markup' => theme($field['type'] . '_formatter_default',
-                                           array('element' => $items,
-                                                 //'field' => $instance,
-                                                 'display' => $display,
-                                                 )),);
-  }
-  return $element;
-}
-
-/**
  * Theme function for field formatter.
- * Adapted for 2 types:
- * - default, 'normal', tabular format
- * - inline format, adapted for use in interfaces such as Google Places.
- * This is put in 1 function, since there is a lot of pre-processing before the actual formatting,
- * So you'll find 2 parts: part1 = Preprocessing, part2 = Formatting, depending on the choosen formatter.
- * @TODO: use e.g. strtotime() / Date_module http://php.net/manual/en/function.date.php functions for proper time formatting.
  */
 function theme_office_hours_formatter_default($vars) {
-  $element = $vars['element'];
-  $settings = $vars['display']['settings'];
-
-  $settings['separator_grouped_days'] = isset($settings['separator_grouped_days']) ? $settings['separator_grouped_days'] : ' - ';
-
-  $show_closed = !empty($settings['showclosed']); // D7-version
-  //  $show_closed = $field['showclosed']; // D6-version
-
-  // Get the label per weekday.
-  $settings['daysformat']= (isset($settings['daysformat'])) ? $settings['daysformat'] : 'none';
-  switch ($settings['daysformat']) {
-    case 'long':
-      $weekdays = date_week_days(TRUE);
-      break;
-    case 'short':
-      $weekdays = date_week_days_abbr(TRUE, TRUE, 3); // Abbreviate up to 3 characters
-      break;
-    case 'number':
-      $weekdays = array(0 => 1, 1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6, 6 => 7 );
-      break;
-    case 'none':
-      $weekdays = array(0 => '', 1 => '', 2 => '', 3 => '', 4 => '', 5 => '', 6 => '' );
-      $settings['separator_day_hours'] = '';  // override user's setting if daysformat = 'none'. (Should we?)
-      break;
-  }
-
-  $items = array();
-  // Format the 'hours', e.g. 0900 -> 09:00.
-  foreach (element_children($element) as $key => $arraykey) {
-    $item = $element[$arraykey];
-    $day = (int)($item['day'] / 2); // Keys are 0+1 for sunday, 2+3 for monday, etc. Each day may have normal hours + extra hours.
-    if (isset($day)) {
-      // @TODO: use e.g. strtotime() or Date_module for standard time formatting. See http://php.net/manual/en/function.date.php.
-      $strhrs = _office_hours_mil_to_tf(check_plain($item['starthours']));
-      $endhrs = _office_hours_mil_to_tf(check_plain($item['endhours']));
-      if (!empty($settings['hoursformat'])) {
-        $strhrs = _office_hours_convert_to_ampm($strhrs);
-        $endhrs = _office_hours_convert_to_ampm($endhrs);
-      }
-
-      $items[$day][] = array('strhrs' => $strhrs, 'endhrs' => $endhrs) ; // We're aggregating hours for days together.
-      $items[$day]['label'] = $weekdays[$day];
-
-      // Add group_id to group days with equal hours.
-      
-      if (!empty($settings['grouped'])) {
-        $group_id = "$strhrs::$endhrs";
-        if (!isset ($items[$day]['group_id'])) {
-          $items[$day]['group_id'] = $group_id;
-        }
-        else { // more hours info.
-          $items[$day]['group_id'] .= '-'. $group_id;
-        }
-      }
-    }
-  }
-
-  // add the closed days again, to 1) sort by first_day_of_week and 2) toggle show on/off
-  foreach ($weekdays as $day => $label) {
-    if (!array_key_exists($day, $items)) {
-      $items[$day][]= array('closed' => 'closed'); //silly, but we need this as an array because we can't use a string offset later
-      $items[$day]['label'] = $weekdays[$day];
-
-      // Add group_id for closed days
-      if (!empty($settings['grouped'])) {
-        $group_id = 'closed';
-        $items[$day]['group_id'] = $group_id;
-      }
-    }
-  }
-
-  // Sort the days of the week again, because sorting is lost by adding the closed days.
-  ksort($items);
-  // Sort by first_day_of_week, except for certain types: 'number'/'none' are more frequently used by machines/interfaces.
-  switch ($settings['daysformat']) {
-    case 'long':
-    case 'short':
-      $items = date_week_days_ordered($items);
-      $weekdays = date_week_days_ordered($weekdays);
-      break;
-    case 'number':
-    case 'none':
-      break;
-  }
-
-  // Change label for grouped days.
-  if (!empty($settings['grouped'])) {
-    $group_id = '';
-
-    foreach ($items as $day => $hours) {
-      if ($group_id != $hours['group_id']) {
-        // new group, save label of first day.
-        $group_id = $hours['group_id'];
-        $group_from_label = $hours['label'];
-      }
-      else {
-        // second, third day of group: adjust the label of this group to e.g. 'mon-wed'
-        $items[$day]['label'] = $group_from_label . $settings['separator_grouped_days'] . $hours['label'];
-        // delete previous item of this group, so it will not be shown.
-        unset ($items[$day-1]);
-      }
-    }
-  }
-
-  // Finally, generate the formatter output.
-  $output = '';
-  $values = array();
-  $separator_hours = !empty($settings['separator_hours_hours']) ? $settings['separator_hours_hours'] : '';  
-  $separator_days = !empty($settings['separator_days']) ? $settings['separator_days'] : '';
-
+  $lines = $vars['lines'];
+  $settings = $vars['settings'];
+  $weekdays = $vars['weekdays'];
+  $open = $vars['open'];
   $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
-  foreach ($items as $day => $hours) {
-    $max_label_length = max($max_label_length, strlen($hours['label']));
-  }
-  $max_label_length += strlen($settings['separator_day_hours']); // correction for suffix
 
-  foreach ($items as $day => $hours) {
-    $closed = '';
-    $regular = '';
-    $additional = '';
-    if ( isset($hours[0]['closed']) ) {
-      if ( $show_closed ) {
-        // Format the empty day with a text like 'Closed' or '00:00-00:00'
-          $closed = check_plain( t($settings['closedformat'] ) ); // D7-version
-//          $closed = $hours[0]['closed'] ; // D6-version
-      }
-      else {
-        // Don't output unnecessary fields.
-      }
+  foreach ($lines as $day => &$info) {
+    if (!$info['times'] && !$settings['showclosed']) {
+      unset($lines[$day]);  // do not show the element.
+      continue;
+    }
+
+    // Format the label
+    $info['output_label'] = $info['endday'] !== NULL ? $weekdays[$info['startday']] . $settings['separator_grouped_days'] . $weekdays[$info['endday']] : $weekdays[$info['startday']];
+    $info['output_label'] .= $settings['separator_day_hours'];
+    $max_label_length = max($max_label_length, drupal_strlen($info['output_label']));
+
+    // Format the time
+    if (!$info['times']) {
+      $times = check_plain( t($settings['closedformat'] ) );
     }
     else {
-      $strhrs1 = $hours[0]['strhrs'];
-      $endhrs1 = $hours[0]['endhrs'];
-      if ( isset($hours[1] ) ) {
-        if (!$settings['compress']) {
-          $strhrs2 = $hours[1]['strhrs'];
-          $endhrs2 = $hours[1]['endhrs'];
-          $additional = $settings['separator_more_hours'] . $strhrs2 . $separator_hours . $endhrs2;
+      $times = array();
+      for ($i = 0; $i < 2; $i++) {
+        if (isset($info['times'][$i])) {
+          $times[] = theme(
+                      'office_hours_time_range',
+                      array(
+                        'times'       => $info['times'][$i],
+                        'format'      => empty($settings['hoursformat']) ? 'G:i' : 'g:i a',
+                        'separator'   => $settings['separator_hours_hours'],
+                      )
+                    );
         }
-        else {
-          // Override endhours of morning with endhours of evening.
-          $endhrs1 = $hours[1]['endhrs'];
-        }
       }
-      $regular = $strhrs1 . $separator_hours . $endhrs1;
+      $times = implode($settings['separator_more_hours'], $times);
     }
-
-    $output_hours = $closed . $regular . $additional;
-    if (!empty($output_hours)) {
-      $output .= '<span class="oh-display">'
-               .   '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.70) . 'em; ">'
-               .     $hours['label']
-               .     $settings['separator_day_hours']
-               .   '</span>';
-      if ($closed) {
-        $output .= '<span class="oh-display-closed">'
-                 .   $closed . $regular . $additional
-                 .   $settings['separator_days']
-                 . '</span>';
-      }
-      else {
-        $output .= '<span class="oh-display-hours">'
-                 .   $closed . $regular . $additional
-                 .   $separator_days
-                 . '</span>';
-
-      }
-      $output .= '</span>';
-    }
+    $info['output_times'] = $times;
   }
 
-  return $output;
+  // Generate HTML
+  $HTML = '';
+  foreach ($lines as $id => &$info) {
+    $label = $info['output_label'];
+    $times = $info['output_times'];
+    $HTML .= '<span class="oh-display">' .
+//             '<span class="oh-display-label">' .
+               '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.60) . 'em; ">' .
+                 $label .
+               '</span>' .
+               '<span class="oh-display-times oh-display-' . (!$info['times'] ? 'closed' : 'hours') .
+                 ($info['current'] ? ' oh-display-current' : '') .
+                 '">' .
+                 $times . $settings['separator_days'] .
+               '</span>' .
+             '</span>';
+
+  }
+  $HTML = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '' ) . '">' . $HTML . '</span>';
+
+  return $HTML;
 }
 
 function theme_office_hours($vars) {
@@ -294,4 +162,24 @@ function office_hours_field_multiple_value_form($variables) {
   }
 
   return $output;
+}
+
+/**
+ * Theme function for formatting time ranges
+ */
+function theme_office_hours_time_range($vars = array()) {
+  // Add default values to $vars is not set already.
+  $vars += array(
+    'times' => array(
+      'start' => '',
+      'end' => '',
+    ),
+    'format' => 'G:i',
+    'separator' => ' - ',
+  );
+
+  $startDT = new DateObject(_office_hours_mil_to_tf($vars['times']['start']));
+  $endDT   = new DateObject(_office_hours_mil_to_tf($vars['times']['end']));
+
+  return $startDT->format($vars['format']) . $vars['separator'] . $endDT->format($vars['format']);
 }
