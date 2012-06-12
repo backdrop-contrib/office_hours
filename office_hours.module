@@ -168,8 +168,8 @@ function office_hours_field_schema($field) {
  *
  * Is not implemented: the validation is done in the element callback: office_hours_validate().
  */
-/*function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
-}*
+//function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+//}
 
 /**
  * Implements hook_field_formatter_info().
