@@ -49,25 +49,50 @@ function theme_office_hours_formatter_default($vars) {
     $info['output_times'] = $times;
   }
 
-  // Generate HTML
-  $HTML = '';
-  foreach ($lines as $id => &$info) {
-    $label = $info['output_label'];
-    $times = $info['output_times'];
-    $HTML .= '<span class="oh-display">' .
-//             '<span class="oh-display-label">' .
-               '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.60) . 'em; ">' .
-                 $label .
-               '</span>' .
-               '<span class="oh-display-times oh-display-' . (!$info['times'] ? 'closed' : 'hours') .
-                 ($info['current'] ? ' oh-display-current' : '') .
-                 '">' .
-                 $times . $settings['separator_days'] .
-               '</span>' .
-             '</span>';
-
+  // Generate HTML for hours
+  if ($settings['current_status']['position'] != 3) {
+    $HTML_hours = '';
+    foreach ($lines as $id => &$info) {
+      $label = $info['output_label'];
+      $times = $info['output_times'];
+      $HTML_hours .= '<span class="oh-display">' .
+//               '<span class="oh-display-label">' .
+                 '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.60) . 'em; ">' .
+                   $label .
+                 '</span>' .
+                 '<span class="oh-display-times oh-display-' . (!$info['times'] ? 'closed' : 'hours') .
+                   ($info['current'] ? ' oh-display-current' : '') .
+                   '">' .
+                   $times . $settings['separator_days'] .
+                 '</span>' .
+               '</span>';
+    }
+    $HTML_hours = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '' ) . '">' .
+                  $HTML_hours .
+                  '</span>';
   }
-  $HTML = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '' ) . '">' . $HTML . '</span>';
+
+  if ($settings['current_status']['position'] != 0) {
+    // Generate HTML for hours
+    $HTML_current_status = $open ? $settings['current_status']['open_text'] : $settings['current_status']['closed_text'];
+    $HTML_current_status = '<span class="oh-display-status">' . check_plain(t($HTML_current_status)) . '</span>';
+  }
+
+//  '#options' => array(0 => t('Hidden'), 1 => t('Before hours'), 2 => t('After hours'), 3 => t('Hiding hours'), ),
+  switch ($settings['current_status']['position']) {
+    case 0: // Hidden current status
+      $HTML = $HTML_hours;
+      break;
+    case 1: // Before hours
+      $HTML = $HTML_current_status . $HTML_hours;
+      break;
+    case 2: // After hours
+      $HTML = $HTML_hours . $HTML_current_status;
+      break;
+    case 3: // Hiding hours
+      $HTML = $HTML_current_status;
+      break;
+  }
 
   return $HTML;
 }
@@ -178,8 +203,8 @@ function theme_office_hours_time_range($vars = array()) {
     'separator' => ' - ',
   );
 
-  $startDT = new DateObject(_office_hours_mil_to_tf($vars['times']['start']));
-  $endDT   = new DateObject(_office_hours_mil_to_tf($vars['times']['end']));
+  $start_date = new DateObject(_office_hours_mil_to_tf($vars['times']['start']));
+  $end_date   = new DateObject(_office_hours_mil_to_tf($vars['times']['end']));
 
-  return $startDT->format($vars['format']) . $vars['separator'] . $endDT->format($vars['format']);
+  return $start_date->format($vars['format']) . $vars['separator'] . $end_date->format($vars['format']);
 }

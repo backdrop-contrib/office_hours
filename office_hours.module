@@ -10,7 +10,7 @@ module_load_include('elements.inc', 'office_hours');
 /**
  * Implements hook_theme().
  */
-function office_hours_theme ($existing, $type, $theme, $path) {
+function office_hours_theme($existing, $type, $theme, $path) {
   $base = array(
     'file' => 'office_hours.theme.inc',
     'path' => "$path",
@@ -189,6 +189,24 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   $display = $instance['display'][$view_mode];
   $settings = _office_hours_field_formatter_defaults($instance['display'][$view_mode]['settings']);
 
+/*
+  // Find timezone fields, to be used in 'Current status'-option.
+  $fields = field_info_instances( (isset($form['#entity_type']) ? $form['#entity_type'] : NULL), (isset($form['#bundle']) ? $form['#bundle'] : NULL));
+  $tzFields = array();
+  foreach ($fields as $field_name => $tzInstance) {
+    if ($field_name == $field['field_name'])
+      continue;
+    
+    $tzField = field_read_field($field_name);
+    
+    if (in_array($tzField['type'], array('tzfield'))) {
+      $tzFields[$tzInstance['field_name']] = $tzInstance['label'] . ' (' . $tzInstance['field_name'] . ')';
+    }
+  }
+  if ($tzFields) {
+    $tzFields = array('' => '<None>') + $tzFields;
+  }
+*/
   $form = array();
 
 // @TODO: The settings could go under the several 'core' settings,
@@ -283,6 +301,51 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#description' => t('This separator will be placed between the hours and more_hours of a day.'),
   );
 
+  // Show a 'Current status' option
+  $form['current_status'] = array(
+    '#title' => t('Current status'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['current_status']['position'] = array(
+    '#type' => 'select',
+    '#title' => t('Current status position'),
+    '#options' => array(0 => t('Hidden'), 1 => t('Before hours'), 2 => t('After hours'), 3 => t('Hiding hours'), ),
+    '#default_value' => $settings['current_status']['position'],
+    '#description' => t('Where should the current status be located?'),
+  );
+  $form['current_status']['open_text'] = array(
+    '#title' => t('Formatting'),
+    '#type' => 'textfield',
+    '#size' => 40,
+    '#default_value' => $settings['current_status']['open_text'],
+    '#description' => t('Format of the message displayed when currently open. You can use translatable text (do not use quotes) and HTML in this field.'),
+  );
+  $form['current_status']['closed_text'] = array(
+    '#type' => 'textfield',
+    '#size' => 40,
+    '#default_value' => $settings['current_status']['closed_text'],
+    '#description' => t('Format of message displayed when currently closed. You can use translatable text (do not use quotes) and HTML in this field.'),
+  );
+
+/*
+  if ($tzFields) {
+    $form['timezone_field'] = array(
+      '#type' => 'select',
+      '#title' => t('Timezone Field'),
+      '#options' => $tzFields,
+      '#default_value' => $settings['timezone_field'],
+      '#description' => t('Should we use another field to set the timezone for these hours?'),
+    );
+  }
+  else {
+    $form['timezone_field'] = array(
+      '#type' => 'hidden',
+      '#value' => $settings['timezone_field'],
+    );
+  }
+*/
   return $form;
 }
 
@@ -520,9 +583,9 @@ function office_hours_views_api() {
 }
 
 function _office_hours_show_ampm($hours) {
-  foreach($hours as $key=> $hour) {
+  foreach ($hours as $key => $hour) {
    if (!empty($hour)) {
-      $hours[$key] = $hour. ":00 ("._office_hours_convert_to_ampm($hour).")";
+      $hours[$key] = $hour . ":00 (" . _office_hours_convert_to_ampm($hour) . ")";
     }
   }
   return $hours;
@@ -530,7 +593,7 @@ function _office_hours_show_ampm($hours) {
 
 function _office_hours_limit_hours($hours, $limitstart=0, $limitend=25) {
   $limitedhours[] = '';
-  foreach($hours as $key => $hour) {
+  foreach ($hours as $key => $hour) {
    if ($hour >= $limitstart && $hour <= $limitend) {
       $limitedhours[$key] = $hour;
     }
@@ -622,7 +685,7 @@ function _office_hours_tf_to_mil($hour) {
 }
 
 function _office_hours_mil_to_tf($time = '') {
-  if (strlen($time) == 2) $time = $time.'00';
+  if (strlen($time) == 2) $time = $time . '00';
   $hour = (substr($time, 0, -2)) ? substr($time, 0, -2): '0';
   $min = (substr($time, -2)) ? substr($time, -2): '00';
   return $hour . ":" . $min;
@@ -671,12 +734,19 @@ function _office_hours_field_formatter_defaults($settings = array()) {
       'separator_day_hours' => ': ',
       'separator_hours_hours' => '-',
       'separator_more_hours' => ', ',
+      'current_status' => array(
+        'position' => 0,
+        'open_text' => 'Currently open!',
+        'closed_text' => 'Currently closed',
+      ),
+      'timezone_field' => '',
     )
   );
 }
 
+/*
 function office_hours_field_views_data($field) {
-/*      $data = _office_hours_views_field_views_data($field);
+        $data = _office_hours_views_field_views_data($field);
         $db_info = $field['storage'];
         $table_alias = content_views_tablename($field);
         // Swap the filter handler.
@@ -684,14 +754,15 @@ function office_hours_field_views_data($field) {
         $data[$table_alias][$field['field_name'] . '_starthours']['filter']['handler'] = 'office_hours_handler_filter_hours';
         $data[$table_alias][$field['field_name'] . '_endhours']['filter']['handler'] = 'content_handler_handler_filter_hours';
         return $data;
-*/
 }
+*/
 
 /**
  * Adding all table field into $data in hook_views_data.
  */
+/*
 function _office_hours_views_field_views_data($field) {
-/*  $field_types = _content_field_types();
+    $field_types = _content_field_types();
     $db_info = content_database_info($field);
 
     // Field modules that do not store data in the database
@@ -808,5 +879,5 @@ function _office_hours_views_field_views_data($field) {
     }
     // TODO: provide automatic filters, sorts, and arguments for each column, not just the first?
     return array($table_alias => $data);
-*/
 }
+*/
