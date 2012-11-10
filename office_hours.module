@@ -72,7 +72,41 @@ function office_hours_field_info() {
       'instance_settings' => array('hoursformat', 'granularity', 'limitstart', 'limitend', 'valhrs', 'addhrs'),
       'default_widget' => 'office_hours',
       'default_formatter' => 'office_hours',
+
+      // Integrate with the Entity Metadata module.
+      'property_type' => 'office_hours',
+      'property_callbacks' => array('office_hours_property_info_callback'),
      ),
+  );
+}
+
+function office_hours_property_info_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+  
+  $property['getter callback'] = 'entity_metadata_field_verbatim_get';
+  $property['setter callback'] = 'entity_metadata_field_verbatim_set';
+  unset($property['query callback']);
+  
+  $property['property info']['day'] = array(
+    'type' => 'integer',
+    'label' => t('Day'),
+    'description' => 'Stores the day value',
+    'setter callback' => 'entity_property_verbatim_set',
+    'default' => 0,
+  );
+  $property['property info']['starthours'] = array(
+    'type' => 'integer',
+    'label' => t('Start Hours'),
+    'description' => 'Stores the start hours value',
+    'setter callback' => 'entity_property_verbatim_set',
+    'default' => 0,
+  );
+  $property['property info']['endhours'] = array(
+    'type' => 'integer',
+    'label' => t('End Hours'),
+    'description' => 'Stores the end hours value',
+    'setter callback' => 'entity_property_verbatim_set',
+    'default' => 0,
   );
 }
 
