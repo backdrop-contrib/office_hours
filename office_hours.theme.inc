@@ -50,7 +50,7 @@ function theme_office_hours_formatter_default($vars) {
   }
 
   // Generate HTML for hours
-  if ($settings['current_status']['position'] != 3) {
+  if ($settings['current_status']['position'] != '3') {
     $HTML_hours = '';
     foreach ($lines as $id => &$info) {
       $label = $info['output_label'];
@@ -72,13 +72,20 @@ function theme_office_hours_formatter_default($vars) {
                   '</span>';
   }
 
-  if ($settings['current_status']['position'] != 0) {
+  if ($settings['current_status']['position'] != '0') {
     // Generate HTML for hours
-    $HTML_current_status = $open ? $settings['current_status']['open_text'] : $settings['current_status']['closed_text'];
-    $HTML_current_status = '<span class="oh-display-status">' . check_plain(t($HTML_current_status)) . '</span>';
+    if ($open == TRUE) {
+      $HTML_current_status = '<span class="oh-current-open">' . t($settings['current_status']['open_text']) . '</span>';
+    }
+    elseif ($open == FALSE) {
+      $HTML_current_status = '<span class="oh-current-closed">' . t($settings['current_status']['closed_text']) . '</span>';
+    }
+    else {
+      // $TODO : status for 'open soon'
+      $HTML_current_status = '<span class="oh-current-soon">' . t($settings['current_status']['soon_text']) . '</span>';
+    }
   }
 
-//  '#options' => array(0 => t('Hidden'), 1 => t('Before hours'), 2 => t('After hours'), 3 => t('Hiding hours'), ),
   switch ($settings['current_status']['position']) {
     case 0: // Hidden current status
       $HTML = $HTML_hours;

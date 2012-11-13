@@ -226,19 +226,19 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
 /*
   // Find timezone fields, to be used in 'Current status'-option.
   $fields = field_info_instances( (isset($form['#entity_type']) ? $form['#entity_type'] : NULL), (isset($form['#bundle']) ? $form['#bundle'] : NULL));
-  $tzFields = array();
-  foreach ($fields as $field_name => $tzInstance) {
-    if ($field_name == $field['field_name'])
+  $timezone_fields = array();
+  foreach ($fields as $field_name => $timezone_instance) {
+    if ($field_name == $field['field_name']) {
       continue;
+    }    
+    $timezone_field = field_read_field($field_name);
     
-    $tzField = field_read_field($field_name);
-    
-    if (in_array($tzField['type'], array('tzfield'))) {
-      $tzFields[$tzInstance['field_name']] = $tzInstance['label'] . ' (' . $tzInstance['field_name'] . ')';
+    if (in_array($timezone_field['type'], array('tzfield'))) {
+      $timezone_fields[$timezone_instance['field_name']] = $timezone_instance['label'] . ' (' . $timezone_instance['field_name'] . ')';
     }
   }
-  if ($tzFields) {
-    $tzFields = array('' => '<None>') + $tzFields;
+  if ($timezone_fields) {
+    $timezone_fields = array('' => '<None>') + $timezone_fields;
   }
 */
   $form = array();
@@ -364,11 +364,11 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   );
 
 /*
-  if ($tzFields) {
+  if ($timezone_fields) {
     $form['timezone_field'] = array(
       '#type' => 'select',
       '#title' => t('Timezone Field'),
-      '#options' => $tzFields,
+      '#options' => $timezone_fields,
       '#default_value' => $settings['timezone_field'],
       '#description' => t('Should we use another field to set the timezone for these hours?'),
     );
