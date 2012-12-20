@@ -55,17 +55,17 @@ function theme_office_hours_formatter_default($vars) {
     foreach ($lines as $id => &$info) {
       $label = $info['output_label'];
       $times = $info['output_times'];
-      $HTML_hours .= '<span class="oh-display">' .
-//               '<span class="oh-display-label">' .
-                 '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.60) . 'em; ">' .
-                   $label .
-                 '</span>' .
-                 '<span class="oh-display-times oh-display-' . (!$info['times'] ? 'closed' : 'hours') .
-                   ($info['current'] ? ' oh-display-current' : '') .
-                   '">' .
-                   $times . $settings['separator_days'] .
-                 '</span>' .
-               '</span>';
+      $HTML_hours .= '<span class="oh-display">'
+//               . '<span class="oh-display-label">'
+                 . '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.60) . 'em; ">'
+                 . $label
+                 . '</span>'
+                 . '<span class="oh-display-times oh-display-' . (!$info['times'] ? 'closed' : 'hours')
+                 . ($info['current'] ? ' oh-display-current' : '')
+                 . '">'
+                 . $times . $settings['separator_days']
+                 . '</span>'
+                 . '</span>';
     }
     $HTML_hours = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '' ) . '">' .
                   $HTML_hours .

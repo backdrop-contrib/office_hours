@@ -42,7 +42,7 @@ function _office_hours_field_process($element, &$form_state, $form) {
   );
   $element[$field_strhrs] = array(
     '#type' => 'office_hours_select',
-    '#prefix' => t(' from'),
+    '#prefix' => ' ' . t('from'),
     '#default_hours' => isset($element['#value'][$field_strhrs]) ? $element['#value'][$field_strhrs] : '' ,
     '#granularity' => $field_settings['granularity'],
     '#valhrs' => $field_settings['valhrs'],

@@ -76,17 +76,17 @@ function office_hours_field_info() {
       // Integrate with the Entity Metadata module.
       'property_type' => 'office_hours',
       'property_callbacks' => array('office_hours_property_info_callback'),
-     ),
+    ),
   );
 }
 
 function office_hours_property_info_callback(&$info, $entity_type, $field, $instance, $field_type) {
   $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
-  
+
   $property['getter callback'] = 'entity_metadata_field_verbatim_get';
   $property['setter callback'] = 'entity_metadata_field_verbatim_set';
   unset($property['query callback']);
-  
+
   $property['property info']['day'] = array(
     'type' => 'integer',
     'label' => t('Day'),
@@ -230,9 +230,9 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   foreach ($fields as $field_name => $timezone_instance) {
     if ($field_name == $field['field_name']) {
       continue;
-    }    
+    }
     $timezone_field = field_read_field($field_name);
-    
+
     if (in_array($timezone_field['type'], array('tzfield'))) {
       $timezone_fields[$timezone_instance['field_name']] = $timezone_instance['label'] . ' (' . $timezone_instance['field_name'] . ')';
     }
@@ -240,7 +240,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   if ($timezone_fields) {
     $timezone_fields = array('' => '<None>') + $timezone_fields;
   }
-*/
+ */
   $form = array();
 
 // @TODO: The settings could go under the several 'core' settings,
@@ -379,15 +379,16 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
       '#value' => $settings['timezone_field'],
     );
   }
-*/
+ */
+
   return $form;
 }
 
 /**
- * Implements hook_field_formatter_settings_summary.
+ * Implements hook_field_formatter_settings_summary().
  * Returns a short summary for the current formatter settings of an instance.
  * @TODO: return more info, like the Date module does.
-**/
+ */
 function office_hours_field_formatter_settings_summary($field, $instance, $view_mode) {
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
@@ -618,7 +619,7 @@ function office_hours_views_api() {
 
 function _office_hours_show_ampm($hours) {
   foreach ($hours as $key => $hour) {
-   if (!empty($hour)) {
+    if (!empty($hour)) {
       $hours[$key] = $hour . ":00 (" . _office_hours_convert_to_ampm($hour) . ")";
     }
   }
@@ -628,7 +629,7 @@ function _office_hours_show_ampm($hours) {
 function _office_hours_limit_hours($hours, $limitstart=0, $limitend=25) {
   $limitedhours[] = '';
   foreach ($hours as $key => $hour) {
-   if ($hour >= $limitstart && $hour <= $limitend) {
+    if ($hour >= $limitstart && $hour <= $limitend) {
       $limitedhours[$key] = $hour;
     }
   }
@@ -719,7 +720,9 @@ function _office_hours_tf_to_mil($hour) {
 }
 
 function _office_hours_mil_to_tf($time = '') {
-  if (strlen($time) == 2) $time = $time . '00';
+  if (strlen($time) == 2) {
+    $time = $time . '00';
+  }
   $hour = (substr($time, 0, -2)) ? substr($time, 0, -2): '0';
   $min = (substr($time, -2)) ? substr($time, -2): '00';
   return $hour . ":" . $min;
@@ -789,7 +792,7 @@ function office_hours_field_views_data($field) {
         $data[$table_alias][$field['field_name'] . '_endhours']['filter']['handler'] = 'content_handler_handler_filter_hours';
         return $data;
 }
-*/
+ */
 
 /**
  * Adding all table field into $data in hook_views_data.
@@ -914,4 +917,4 @@ function _office_hours_views_field_views_data($field) {
     // TODO: provide automatic filters, sorts, and arguments for each column, not just the first?
     return array($table_alias => $data);
 }
-*/
+ */

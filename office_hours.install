@@ -1,8 +1,8 @@
 <?php
 /**
-* @file
-* Install, update and uninstall functions for the Office hours module.
-*/
+ * @file
+ * Install, update and uninstall functions for the Office hours module.
+ */
 
 /**
  * Implements hook_install().
