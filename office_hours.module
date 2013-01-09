@@ -431,18 +431,8 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
       break;
   }
 
-  $timezone = NULL; // @TODO
-  $currentDT = new DateObject('now');
-  if ($timezone) {
-    $currentDT->setTimezone(new DateTimeZone($timezone));
-  }
-  $current_day = (int)$currentDT->format('N')  % 7;  // Convert from Sunday from 7 to 0.
-  $open = FALSE;
-  $current = FALSE;
-  $next = NULL;
-
   // Populate days and times, using date_api as key (0=Sun, 6-Sat)
-  // Empty days are not present in $items, and are now added in $days.
+  // Empty days are not yet present in $items, and are now added in $days.
   $days = array();
   for ($day = 0; $day < 7; $day++) {
     $days[$day] = array(
@@ -454,8 +444,19 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     );
   }
 
+  $open = FALSE;
+  $timezone = NULL; // @TODO
+
+  $currentDT = new DateObject('now');
+  if ($timezone) {
+    $currentDT->setTimezone(new DateTimeZone($timezone));
+  }
+  $current_day = (int)$currentDT->format('N')  % 7;  // Convert from Sunday from 7 to 0.
+  $current = FALSE;
+  $next = NULL;
+
   // Loop through all lines. Detect the current line and the open/closed status.
-  // Convert the daynumer to (int) for Sundays.
+  // Convert the daynumber to (int) for Sundays, to get ' 0', not 'false'.
   foreach (element_children($items) as $key => $arraykey) {
     $el  = $items[$arraykey];
     $day = (int)($el['day'] / 2);
@@ -478,27 +479,26 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     // Are we currently open? If not, when is the next time?
     if ($day < $current_day) {
       // Initialize to first day of (next) week, in case we're closed the rest of the week
-      if (!isset($next)) {
-        $next = (int)$day;
-      }
+      $next = !isset($next) ? (int)$day : $next;
     }
     elseif ($day == $current_day) {
-      if ($startDT->difference($currentDT, 'seconds', FALSE) > 0 &&
-          $endDT->difference($currentDT, 'seconds', FALSE) < 0) {
-        $open = TRUE;
-        $days[$day]['current'] = TRUE;
-        $next = (int)$day;
-      }
-      elseif ($endDT->difference($currentDT, 'seconds', FALSE) < 0) {
-        if (!isset($next)) {
+      if ($startDT->difference($currentDT, 'seconds', FALSE) >= 0) {
+        // we were open today, check if we are still open.
+        if ( ($start > $end)    // we are open until after midnight.
+            || ($start == $end) // we are open 24hrs per day.
+            || (($start < $end) && ($endDT->difference($currentDT, 'seconds', FALSE) < 0))) {
+          $open = TRUE;
+          $days[$day]['current'] = TRUE;
           $next = (int)$day;
         }
       }
+      else {
+        // we will open later today. (Remember: empty days are not in the list, yet.)
+          $next = (int)$day;
+      }
     }
     elseif ($day > $current_day) {
-      if (!isset($next)) {
-        $next = (int)$day;
-      }
+      $next = ($next < $current_day)? (int)$day : $next;
     }
   }
   $days[$next]['next'] = TRUE;
