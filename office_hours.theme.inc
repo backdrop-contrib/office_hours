@@ -9,35 +9,32 @@
  * Theme function for field formatter.
  */
 function theme_office_hours_formatter_default($vars) {
-  $lines = $vars['lines'];
+  $days = $vars['days'];
   $settings = $vars['settings'];
-  $weekdays = $vars['weekdays'];
+  $daynames = $vars['daynames'];
   $open = $vars['open'];
   $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
-
-  foreach ($lines as $day => &$info) {
-    if (!$info['times'] && !$settings['showclosed']) {
-      unset($lines[$day]);  // do not show the element.
-      continue;
-    }
-
+  $HTML_hours = '';
+  $HTML_current_status = '';
+  foreach ($days as $day => &$info) {
     // Format the label
-    $info['output_label'] = $info['endday'] !== NULL ? $weekdays[$info['startday']] . $settings['separator_grouped_days'] . $weekdays[$info['endday']] : $weekdays[$info['startday']];
-    $info['output_label'] .= $settings['separator_day_hours'];
-    $max_label_length = max($max_label_length, drupal_strlen($info['output_label']));
+    $label = $daynames[$info['startday']];
+    $label .= !isset($info['endday']) ? '' : $settings['separator_grouped_days'] . $daynames[$info['endday']];
+    $label .= $settings['separator_day_hours'];
+    $max_label_length = max($max_label_length, drupal_strlen($label));
 
     // Format the time
     if (!$info['times']) {
-      $times = check_plain( t($settings['closedformat'] ) );
+      $times = filter_xss( t($settings['closedformat']) );
     }
     else {
       $times = array();
-      for ($i = 0; $i < 2; $i++) {
-        if (isset($info['times'][$i])) {
+      for ($alt = 0; $alt < 2; $alt++) {
+        if (isset($info['times'][$alt])) {
           $times[] = theme(
                       'office_hours_time_range',
                       array(
-                        'times'       => $info['times'][$i],
+                        'times'       => $info['times'][$alt],
                         'format'      => empty($settings['hoursformat']) ? 'G:i' : 'g:i a',
                         'separator'   => $settings['separator_hours_hours'],
                       )
@@ -46,58 +43,68 @@ function theme_office_hours_formatter_default($vars) {
       }
       $times = implode($settings['separator_more_hours'], $times);
     }
+
+    $info['output_label'] = $label;
     $info['output_times'] = $times;
   }
 
-  // Generate HTML for hours
-  if ($settings['current_status']['position'] != '3') {
-    $HTML_hours = '';
-    foreach ($lines as $id => &$info) {
-      $label = $info['output_label'];
-      $times = $info['output_times'];
-      $HTML_hours .= '<span class="oh-display">'
-//               . '<span class="oh-display-label">'
-                 . '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.60) . 'em; ">'
-                 . $label
-                 . '</span>'
-                 . '<span class="oh-display-times oh-display-' . (!$info['times'] ? 'closed' : 'hours')
-                 . ($info['current'] ? ' oh-display-current' : '')
-                 . '">'
-                 . $times . $settings['separator_days']
-                 . '</span>'
-                 . '</span>';
+  // Start the loop again, since only now we have the definitive $max_label_length.
+  foreach ($days as $day => &$info) {
+    // Remove unwanted lines.
+    switch ($settings['showclosed']) {
+      case 'all':
+        break;
+      case 'open':
+        if (!isset($info['times'])) {
+          continue 2;
+        }
+        break;
+      case 'next':
+        if (!$info['current'] && !$info['next']) {
+          continue 2;
+        }
+        break;
+      case 'none':
+        continue 2;
+        break;
     }
-    $HTML_hours = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '' ) . '">' .
-                  $HTML_hours .
-                  '</span>';
+
+    // Generate HTML for Hours.
+    $HTML_hours .= '<span class="oh-display">'
+//             . '<span class="oh-display-label">'
+               . '<span class="oh-display-label" style="width: ' . ($max_label_length * 0.60) . 'em; ">'
+               . $info['output_label']
+               . '</span>'
+               . '<span class="oh-display-times oh-display-' . (!$info['times'] ? 'closed' : 'hours')
+               . ($info['current'] ? ' oh-display-current' : '')
+               . '">'
+               . $info['output_times'] . $settings['separator_days']
+               . '</span>'
+               . '</span>';
   }
 
-  if ($settings['current_status']['position'] != '0') {
-    // Generate HTML for hours
-    if ($open == TRUE) {
-      $HTML_current_status = '<span class="oh-current-open">' . t($settings['current_status']['open_text']) . '</span>';
-    }
-    elseif ($open == FALSE) {
-      $HTML_current_status = '<span class="oh-current-closed">' . t($settings['current_status']['closed_text']) . '</span>';
-    }
-    else {
-      // $TODO : status for 'open soon'
-      $HTML_current_status = '<span class="oh-current-soon">' . t($settings['current_status']['soon_text']) . '</span>';
-    }
+  $HTML_hours = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '' ) . '">' .
+                $HTML_hours .
+                '</span>';
+
+  // Generate HTML for CurrentStatus.
+  if ($open) {
+    $HTML_current_status = '<span class="oh-current-open">' . t($settings['current_status']['open_text']) . '</span>';
+  }
+  else {
+    $HTML_current_status = '<span class="oh-current-closed">' . t($settings['current_status']['closed_text']) . '</span>';
   }
 
   switch ($settings['current_status']['position']) {
-    case 0: // Hidden current status
-      $HTML = $HTML_hours;
-      break;
-    case 1: // Before hours
+    case 'before':
       $HTML = $HTML_current_status . $HTML_hours;
       break;
-    case 2: // After hours
+    case 'after':
       $HTML = $HTML_hours . $HTML_current_status;
       break;
-    case 3: // Hiding hours
-      $HTML = $HTML_current_status;
+    case 'hide':
+    default: // Not shown.
+      $HTML = $HTML_hours;
       break;
   }
 
