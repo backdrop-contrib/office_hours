@@ -737,12 +737,11 @@ function _office_hours_tf_to_mil($hour) {
 }
 
 function _office_hours_mil_to_tf($time = '') {
-  if (strlen($time) == 2) {
-    $time = $time . '00';
-  }
-  $hour = (substr($time, 0, -2)) ? substr($time, 0, -2): '0';
-  $min = (substr($time, -2)) ? substr($time, -2): '00';
-  return $hour . ":" . $min;
+  $time = substr('0000' . $time, -4);
+  $hour = substr($time, 0, -2);
+  $min = substr($time, -2);
+
+  return $hour . ':' . $min;
 }
 
 function _office_hours_set_weight($items) {
