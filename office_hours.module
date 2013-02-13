@@ -179,22 +179,6 @@ function _office_hours_field_settings_form_validate($element, &$form_state) {
 }
 
 /**
- * Implements hook_field_schema($field).
- */
-function office_hours_field_schema($field) {
-  switch ($field['type']) {
-    case 'office_hours':
-      $db_columns = array(
-        'day' => array('type' => 'int', 'not null' => FALSE),
-        'starthours' => array('type' => 'int', 'not null' => FALSE),
-        'endhours' => array('type' => 'int', 'not null' => FALSE),
-      );
-    break;
-  }
-  return array('columns' => $db_columns);
-}
-
-/**
  * Implements hook_field_validate().
  * Is called a.o. when saving the content type field (default value) and content.
  *

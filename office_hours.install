@@ -5,6 +5,31 @@
  */
 
 /**
+ * Implements hook_field_schema($field).
+ */
+function office_hours_field_schema($field) {
+  switch ($field['type']) {
+    case 'office_hours':
+      $db_columns = array(
+        'day' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'starthours' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'endhours' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+      );
+    break;
+  }
+  return array('columns' => $db_columns);
+}
+
+/**
  * Implements hook_install().
  */
 //function office_hours_install() {
