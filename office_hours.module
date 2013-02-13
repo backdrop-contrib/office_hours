@@ -605,18 +605,19 @@ function office_hours_element_info() {
   return array(
     'office_hours' => array(
       '#input' => TRUE,
-      '#tree' => TRUE,
-      '#columns' => array('day', 'starthours', 'endhours'),
       '#process' => array('_office_hours_field_process'),
       '#element_validate' => array('_office_hours_field_validate'),
+      '#tree' => TRUE,
+      '#columns' => array('day', 'starthours', 'endhours'),
       '#theme' => 'office_hours',
     ),
     'office_hours_select' => array(
       '#input' => TRUE,
-      '#tree' => TRUE,
       '#process' => array('_office_hours_select_process'),
       '#element_validate' => array('_office_hours_select_validate'),
+      '#tree' => TRUE,
       '#theme' => 'office_hours_select',
+      '#value_callback' => '_office_hours_select_value_callback',
     ),
   );
 }
@@ -697,32 +698,6 @@ function _office_hours_convert_to_ampm($hour) {
     $ampm =' AM';
   }
   return $hr . ':' . $min . $ampm;
-}
-
-function _office_hours_return_defaults($default, $format = 0) {
-  $ampm = 'am';
-  $defhr = '';
-  $defmin = '';
-  if (!is_numeric($default)) {
-    return array($defhr, $defmin, $ampm);
-  }
-
-  $hour = _office_hours_mil_to_tf($default);
-  list($defhr, $defmin) = explode(":", $hour);
-
-  if ($format) {
-    if ($defhr >= 12) {
-      $defhr -= ($defhr != 12) ? 12 : 0;
-      $ampm = 'pm';
-    }
-    elseif ($defhr == 0) {
-      $defhr +=12;
-    }
-  }
-  else {
-    $defhr = str_pad($defhr, 2, '0', STR_PAD_LEFT);
-  }
-  return array($defhr, $defmin, $ampm);
 }
 
 function _office_hours_tf_to_mil($hour) {

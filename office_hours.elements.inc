@@ -35,6 +35,7 @@ function _office_hours_field_process($element, &$form_state, $form) {
     $element['#prefix'] = "<div class='oh-hide'>";
     $element['#value'][$field_strhrs] = '';
   }
+
   $element['#suffix'] = '</div>';
   $element[$field_day] = array(
     '#type' => 'value',
@@ -43,7 +44,7 @@ function _office_hours_field_process($element, &$form_state, $form) {
   $element[$field_strhrs] = array(
     '#type' => 'office_hours_select',
     '#prefix' => ' ' . t('from'),
-    '#default_hours' => isset($element['#value'][$field_strhrs]) ? $element['#value'][$field_strhrs] : '' ,
+    '#default_value' => isset($element['#value'][$field_strhrs]) ? $element['#value'][$field_strhrs] : NULL ,
     '#granularity' => $field_settings['granularity'],
     '#valhrs' => $field_settings['valhrs'],
     '#hoursformat' => $field_settings['hoursformat'],
@@ -53,46 +54,70 @@ function _office_hours_field_process($element, &$form_state, $form) {
   $element[$field_endhrs] = array(
     '#type' => 'office_hours_select',
     '#prefix' => t('until'),
-    '#default_hours' => isset($element['#value'][$field_endhrs]) ? $element['#value'][$field_endhrs] : '',
+    '#default_value' => isset($element['#value'][$field_endhrs]) ? $element['#value'][$field_endhrs] : NULL,
     '#granularity' => $field_settings['granularity'],
     '#valhrs' => $field_settings['valhrs'],
     '#hoursformat' => $field_settings['hoursformat'],
     '#limitstart' => $field_settings['limitstart'],
     '#limitend' => $field_settings['limitend'],
-
   );
 
   return $element;
 }
 
 /**
- * Process the hours selector element.
+ * Value callback for office_hours_select element.
+ */
+function _office_hours_select_value_callback($element, $input = FALSE, &$form_state) {
+  $ampm = 'am';
+  $defhr = '';
+  $defmin = '';
+  if (!is_numeric($element['#default_value'])) {
+    return array($defhr, $defmin, $ampm);
+  }
+
+  $hour = _office_hours_mil_to_tf($element['#default_value']);
+  list($defhr, $defmin) = explode(':', $hour);
+
+  if ($element['#hoursformat']) {
+    if ($defhr >= 12) {
+      $defhr -= ($defhr != 12) ? 12 : 0;
+      $ampm = 'pm';
+    }
+    elseif ($defhr == 0) {
+      $defhr += 12;
+    }
+  }
+  else {
+    $defhr = str_pad($defhr, 2, '0', STR_PAD_LEFT);
+  }
+  return array($defhr, $defmin, $ampm);
+}
+
+/**
+ * Process the office_hours_select element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
-  list($defhr, $defmin, $ampm) = _office_hours_return_defaults($element['#default_hours'], $element['#hoursformat']);
   $minutes = date_minutes('i', FALSE, $element['#granularity']);
   $hours = ($element['#hoursformat'] == 1) ? date_hours('g') : date_hours('H');
   if (!empty($element['#limitstart']) || !empty($element['#limitend']) ) {
     $hours = _office_hours_limit_hours($hours, $element['#limitstart'], $element['#limitend']);
   }
-
   $element['hours'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($hours),
-    '#default_value' => $defhr,
+    '#default_value' => $element['#value'][0],
   );
-
   $element['minutes'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($minutes),
-    '#default_value' => $defmin,
+    '#default_value' => $element['#value'][1],
   );
-
   if ($element['#hoursformat'] == 1) {
     $element['ampm'] = array(
       '#type' => 'select',
       '#options' => date_ampm(),
-      '#default_value' => $ampm,
+      '#default_value' => $element['#value'][2],
     );
   }
   return $element;
