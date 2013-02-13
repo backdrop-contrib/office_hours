@@ -209,6 +209,9 @@ function office_hours_field_formatter_info() {
   );
 }
 
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
 function office_hours_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
   $display = $instance['display'][$view_mode];
   $settings = _office_hours_field_formatter_defaults($instance['display'][$view_mode]['settings']);
@@ -380,6 +383,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
 
 /**
  * Implements hook_field_formatter_settings_summary().
+ *
  * Returns a short summary for the current formatter settings of an instance.
  * @TODO: return more info, like the Date module does.
  */
@@ -396,6 +400,7 @@ function office_hours_field_formatter_settings_summary($field, $instance, $view_
 
 /**
  * Implements hook_field_formatter_view().
+ *
  * Be careful: date_api uses 0=Sunday, and DateObject uses ISO: 1=Sunday.
  */
 function office_hours_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
@@ -550,7 +555,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
 
 
 /**
- * Implements hook_widget_info().
+ * Implements hook_field_widget_info().
  */
 function office_hours_field_widget_info() {
   return array(
@@ -586,6 +591,7 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
 
 /**
  * Implements hook_field_widget_error().
+ *
  * This is necessary to show the errors thrown in hook_field_validate().
  */
 function office_hours_field_widget_error($element, $error, $form, &$form_state) {
