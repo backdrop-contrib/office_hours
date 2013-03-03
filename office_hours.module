@@ -574,12 +574,6 @@ function office_hours_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  if ($delta == 0) {
-    // This function is called 14 times for each block. We only need to include files once, not 14 times.
-    // @TODO: perhaps it is even better to include it in office_hours_field_multiple_value_form(), which is only called once per page.
-    drupal_add_js(drupal_get_path('module', 'office_hours') . "/office_hours.js", 'file');
-  }
-
   $items = _office_hours_arrange_items($items);
   $element += array(
     '#type' => 'office_hours',
@@ -610,6 +604,15 @@ function office_hours_element_info() {
       '#tree' => TRUE,
       '#columns' => array('day', 'starthours', 'endhours'),
       '#theme' => 'office_hours',
+      '#attached' => array(
+//        'css' => array(
+//          drupal_get_path('module', 'office_hours') . '/office_hours.css',
+//        ),
+        'js' => array(
+          drupal_get_path('module', 'office_hours') . '/office_hours.js',
+          ),
+      ),
+//      '#pre_render' => array('_office_hours_pre_render_element'),
     ),
     'office_hours_select' => array(
       '#input' => TRUE,
