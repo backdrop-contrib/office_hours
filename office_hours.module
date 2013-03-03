@@ -448,8 +448,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
   if ($timezone) {
     $currentDT->setTimezone(new DateTimeZone($timezone));
   }
-  $current_day = (int)$currentDT->format('N')  % 7;  // Convert from Sunday from 7 to 0.
-  $current = FALSE;
+  $today = (int)$currentDT->format('N')  % 7;  // Convert from Sunday from 7 to 0.
   $next = NULL;
 
   // Loop through all lines. Detect the current line and the open/closed status.
@@ -474,11 +473,14 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     $endDT = @$endDT->merge($currentDT);
 
     // Are we currently open? If not, when is the next time?
-    if ($day < $current_day) {
+    // Remember: empty days are not in $items; they are present in $days.
+    if ($day < $today ) {
       // Initialize to first day of (next) week, in case we're closed the rest of the week
-      $next = !isset($next) ? (int)$day : $next;
+      if ($next == NULL) {
+        $next = (int)$day;
+      }
     }
-    elseif ($day == $current_day) {
+    elseif ($day == $today) {
       if ($startDT->difference($currentDT, 'seconds', FALSE) >= 0) {
         // we were open today, check if we are still open.
         if ( ($start > $end)    // we are open until after midnight.
@@ -488,17 +490,24 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
           $days[$day]['current'] = TRUE;
           $next = (int)$day;
         }
+        else {
+          // We have already closed.
+        }
       }
       else {
-        // we will open later today. (Remember: empty days are not in the list, yet.)
+        // we will open later today.
           $next = (int)$day;
       }
     }
-    elseif ($day > $current_day) {
-      $next = ($next < $current_day)? (int)$day : $next;
+    elseif ($day > $today) {
+      if ($next == NULL || $next < $today) {
+        $next = (int)$day;
+      }
     }
   }
-  $days[$next]['next'] = TRUE;
+  if ($next != NULL) {
+    $days[(int)$next]['next'] = TRUE;
+  }
 
   // Re-sort lines array for the correct starting day
   $days = date_week_days_ordered($days);
