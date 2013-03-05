@@ -16,10 +16,12 @@ function office_hours_theme($existing, $type, $theme, $path) {
     'path' => "$path",
   );
   $themes = array(
+    // Formatter theming functions.
     'office_hours_formatter_default' => $base + array('render element' => 'element'),
     'office_hours_time_range' => $base + array('render element' => 'element'),
-    'office_hours' => $base + array('render element' => 'element'),
+    // Widget theming functions.
     'field_multiple_value_form' => $base + array('render element' => 'element'),
+    'office_hours_block' => $base + array('render element' => 'element'),
     'office_hours_select' => $base + array('render element' => 'element'),
   );
   return $themes;
@@ -202,8 +204,7 @@ function office_hours_field_formatter_info() {
   return array(
     'office_hours' => array(
       'label' => 'Office hours',
-      'field types' =>  array('office_hours_formatter_default', 'office_hours', 'office_hours_multiple_values', 'office_hours_select'),
-      'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+      'field types' =>  array('office_hours',),
       'settings' => _office_hours_field_formatter_defaults(),
     ),
   );
@@ -585,7 +586,7 @@ function office_hours_field_widget_info() {
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $items = _office_hours_arrange_items($items);
   $element += array(
-    '#type' => 'office_hours',
+    '#type' => 'office_hours_block',
     '#default_value' => isset($items[$delta]['starthours']) ? $items[$delta] : NULL,
   );
 
@@ -606,13 +607,13 @@ function office_hours_field_widget_error($element, $error, $form, &$form_state) 
  */
 function office_hours_element_info() {
   return array(
-    'office_hours' => array(
+    'office_hours_block' => array(
       '#input' => TRUE,
-      '#process' => array('_office_hours_field_process'),
-      '#element_validate' => array('_office_hours_field_validate'),
+      '#process' => array('_office_hours_block_process'),
+      '#element_validate' => array('_office_hours_block_validate'),
       '#tree' => TRUE,
       '#columns' => array('day', 'starthours', 'endhours'),
-      '#theme' => 'office_hours',
+      '#theme' => 'office_hours_block',
       '#attached' => array(
 //        'css' => array(
 //          drupal_get_path('module', 'office_hours') . '/office_hours.css',

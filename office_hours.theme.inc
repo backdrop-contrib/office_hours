@@ -111,12 +111,35 @@ function theme_office_hours_formatter_default($vars) {
   return $HTML;
 }
 
-function theme_office_hours($vars) {
+/**
+ * Theme function for formatter: time ranges
+ */
+function theme_office_hours_time_range($vars = array()) {
+  // Add default values to $vars is not set already.
+  $vars += array(
+    'times' => array(
+      'start' => '',
+      'end' => '',
+    ),
+    'format' => 'G:i',
+    'separator' => ' - ',
+  );
+
+  $start_date = new DateObject(_office_hours_mil_to_tf($vars['times']['start']));
+  $end_date   = new DateObject(_office_hours_mil_to_tf($vars['times']['end']));
+
+  return $start_date->format($vars['format']) . $vars['separator'] . $end_date->format($vars['format']);
+}
+
+/**
+ * Theme function for widget: office hours block.
+ */
+function theme_office_hours_block($vars) {
   return $vars['element']['#children'];
 }
 
 /**
- * Theme function for the office hours selector element.
+ * Theme function for widget: office hours selector element.
  */
 function theme_office_hours_select($vars) {
   return $vars['element']['#children'];
@@ -130,7 +153,7 @@ function theme_office_hours_select($vars) {
  */
 function office_hours_field_multiple_value_form($variables) {
   // Use Field's theme function for non-office hours fields.
-  if (empty($variables['element'][0]['#type']) || $variables['element'][0]['#type'] != 'office_hours') {
+  if (empty($variables['element'][0]['#type']) || $variables['element'][0]['#type'] != 'office_hours_block') {
     return theme_field_multiple_value_form($variables);
   }
 
@@ -201,24 +224,4 @@ function office_hours_field_multiple_value_form($variables) {
   }
 
   return $output;
-}
-
-/**
- * Theme function for formatting time ranges
- */
-function theme_office_hours_time_range($vars = array()) {
-  // Add default values to $vars is not set already.
-  $vars += array(
-    'times' => array(
-      'start' => '',
-      'end' => '',
-    ),
-    'format' => 'G:i',
-    'separator' => ' - ',
-  );
-
-  $start_date = new DateObject(_office_hours_mil_to_tf($vars['times']['start']));
-  $end_date   = new DateObject(_office_hours_mil_to_tf($vars['times']['end']));
-
-  return $start_date->format($vars['format']) . $vars['separator'] . $end_date->format($vars['format']);
 }

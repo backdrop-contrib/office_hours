@@ -13,7 +13,7 @@
  * Build the form element. When creating a form using FAPI #process,
  * note that $element['#value'] is already set.
  */
-function _office_hours_field_process($element, &$form_state, $form) {
+function _office_hours_block_process($element, &$form_state, $form) {
   $field_settings = _office_hours_get_field_settings($element, $form_state);
 
   $day = $element['#weight'];
@@ -161,12 +161,12 @@ function office_hours_select_is_empty($item, $field) {
 
 /**
  * Implements a callback for _office_hours_elements()
- * which defines the 'office_hours' (day) and 'office_hours_select' (hour) elements.
+ * which defines the 'office_hours_block' (day) and 'office_hours_select' (hour) elements.
  *
  * You can find the value in $element['#value'], but better in $form_state['values'],
  * which is set in _office_hours_select_validate().
  */
-function _office_hours_field_validate($element, &$form_state) {
+function _office_hours_block_validate($element, &$form_state) {
   $field_settings = _office_hours_get_field_settings($element, $form_state);
 
   $delta = $element['#delta'];
