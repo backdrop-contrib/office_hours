@@ -69,7 +69,7 @@ function office_hours_field_is_empty($item, $field) {
 function office_hours_field_info() {
   return array(
     'office_hours' => array(
-      'label' => 'Office Hours',
+      'label' => t('Office hours'),
       'description' => t('Store office or opening hours in the database.'),
       'settings' => array(
         'hoursformat' => 0,
@@ -203,7 +203,7 @@ function _office_hours_field_settings_form_validate($element, &$form_state) {
 function office_hours_field_formatter_info() {
   return array(
     'office_hours' => array(
-      'label' => 'Office hours',
+      'label' => t('Office hours'),
       'field types' =>  array('office_hours',),
       'settings' => _office_hours_field_formatter_defaults(),
     ),
@@ -570,7 +570,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
 function office_hours_field_widget_info() {
   return array(
     'office_hours' => array(
-      'label' => t('Office Hours'),
+      'label' => t('Office hours'),
       'field types' => array('office_hours'),
       'behaviors' => array(
         'multiple values' => FIELD_BEHAVIOR_DEFAULT,

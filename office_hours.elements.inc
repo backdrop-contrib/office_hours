@@ -173,23 +173,31 @@ function _office_hours_block_validate($element, &$form_state) {
   $item = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
 
   $error_text = '';
+  $valhrs = $field_settings['valhrs'];
+  $limitstart = $field_settings['limitstart'];
+  $limitend = $field_settings['limitend'];
+
   if (!empty($item['starthours']) xor !empty($item['endhours']) ) {
     $error_text = 'Both Opening hours and Closing hours must be set.';
   }
-  elseif ( ($field_settings['valhrs']) && ($item['starthours'] > $item['endhours']) ) {
-    $error_text = 'Closing hours are earlier than opening hours.';
+  elseif ( ($valhrs) && ($item['starthours'] > $item['endhours']) ) {
+    $error_text = 'Closing hours are earlier than Opening hours.';
   }
-  elseif (!empty($field_settings['limitstart']) || !empty($field_settings['limitend'])) {
-    $starthours = (int) substr($item['starthours'], 0, 2);
-    $endhours = (int) substr($item['endhours'], 0, 2);
-    if ( ($starthours && $field_settings['limitstart'] > $starthours) || ($endhours && $field_settings['limitend'] < $endhours) ) {
-      $error_text = 'Opening hours are outside limits' . ' (' . $field_settings['limitstart'] . ' - ' . $field_settings['limitend'] . ').';
+  elseif (!empty($limitstart) || !empty($limitend)) {
+    $starthours = $item['starthours'];
+    $endhours = $item['endhours'];
+    if ( ($starthours && ($limitstart * 100) > $starthours) || ($endhours && ($limitend * 100) < $endhours) ) {
+      $error_text = 'Hours are outside limits ( !start - !end ).'; 
     }
   }
 
   if ($error_text) {
     $weekdays = date_week_days(TRUE);
-    $error_text  = t($weekdays[$delta / 2]) . ': ' . t($error_text);
+    $error_text  = t('!weekday: ' . $error_text,   
+                     array('!weekday' => $weekdays[$delta / 2],
+                           '!start' => $limitstart . ':00' ,
+                           '!end' =>$limitend . ':00',
+                    ));
 
     form_error($element, check_plain($error_text));
   }
