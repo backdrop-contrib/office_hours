@@ -115,7 +115,7 @@ function theme_office_hours_formatter_default($vars) {
  * Theme function for formatter: time ranges
  */
 function theme_office_hours_time_range($vars = array()) {
-  // Add default values to $vars is not set already.
+  // Add default values to $vars if not set already.
   $vars += array(
     'times' => array(
       'start' => '',
@@ -125,10 +125,10 @@ function theme_office_hours_time_range($vars = array()) {
     'separator' => ' - ',
   );
 
-  $start_date = new DateObject(_office_hours_mil_to_tf($vars['times']['start']));
-  $end_date   = new DateObject(_office_hours_mil_to_tf($vars['times']['end']));
-
-  return $start_date->format($vars['format']) . $vars['separator'] . $end_date->format($vars['format']);
+  $result = _office_hours_time_format($vars['times']['start'], $vars['format'])
+          . $vars['separator']
+          . _office_hours_time_format($vars['times']['end'], $vars['format']);
+  return $result;
 }
 
 /**

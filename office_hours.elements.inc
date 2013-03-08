@@ -66,32 +66,12 @@ function _office_hours_block_process($element, &$form_state, $form) {
 }
 
 /**
- * Value callback for office_hours_select element.
+ * Widget's value callback for office_hours_select element.
+ * Takes the #default_value and dissects it in hours, minutes and ampm indicator.
  */
 function _office_hours_select_value_callback($element, $input = FALSE, &$form_state) {
-  $ampm = 'am';
-  $defhr = '';
-  $defmin = '';
-  if (!is_numeric($element['#default_value'])) {
-    return array($defhr, $defmin, $ampm);
-  }
-
-  $hour = _office_hours_mil_to_tf($element['#default_value']);
-  list($defhr, $defmin) = explode(':', $hour);
-
-  if ($element['#hoursformat']) {
-    if ($defhr >= 12) {
-      $defhr -= ($defhr != 12) ? 12 : 0;
-      $ampm = 'pm';
-    }
-    elseif ($defhr == 0) {
-      $defhr += 12;
-    }
-  }
-  else {
-    $defhr = str_pad($defhr, 2, '0', STR_PAD_LEFT);
-  }
-  return array($defhr, $defmin, $ampm);
+  // return array('hour' => $hour, 'minute' => $minute, 'ampm' => $ampm);
+  return _office_hours_time_parse($element['#default_value'], $element['#hoursformat']);
 }
 
 /**
@@ -103,23 +83,25 @@ function _office_hours_select_process($element, &$form_state, $form) {
   if (!empty($element['#limitstart']) || !empty($element['#limitend']) ) {
     $hours = _office_hours_limit_hours($hours, $element['#limitstart'], $element['#limitend']);
   }
+
   $element['hours'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($hours),
-    '#default_value' => $element['#value'][0],
+    '#default_value' => $element['#value']['hour'],
   );
   $element['minutes'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($minutes),
-    '#default_value' => $element['#value'][1],
+    '#default_value' => $element['#value']['minute'],
   );
   if ($element['#hoursformat'] == 1) {
     $element['ampm'] = array(
       '#type' => 'select',
       '#options' => date_ampm(),
-      '#default_value' => $element['#value'][2],
+      '#default_value' => $element['#value']['ampm'],
     );
   }
+
   return $element;
 }
 
@@ -127,20 +109,20 @@ function _office_hours_select_process($element, &$form_state, $form) {
  * Validate the hours selector element.
  */
 function _office_hours_select_validate($element, &$form_state) {
-  $hour = $element['hours']['#value'];
+  $hours = $element['hours']['#value'];
   $minutes = ($element['minutes']['#value'] == 0) ? '00' : $element['minutes']['#value'];
-
-  if ($element['#hoursformat']) {
-    if ($element['ampm']['#value'] == 'pm' && $hour < 12) $hour += 12;
-    if ($element['ampm']['#value'] == 'am' && $hour == 12) $hour = '00';
+  if ($element['#hoursformat'] == 1) {
+    if ($element['ampm']['#value'] == 'pm' && $hours < 12) $hours += 12;
+    if ($element['ampm']['#value'] == 'am' && $hours == 12) $hours = '00';
   }
-  if ($hour != '' && $minutes != '') {
-    form_set_value($element, (string)$hour . $minutes, $form_state);
+
+  if ($hours != '' && $minutes != '') {
+    form_set_value($element, (string)$hours . $minutes, $form_state);
   }
   else {
     form_set_value($element, '', $form_state);
   }
-  if ($hour < 0 || $hour > 23) {
+  if ($hours < 0 || $hours > 23) {
     form_error($element, t('Hours should be between 0 and 23.'));
   }
   if ($minutes < 0 || $minutes > 59) {

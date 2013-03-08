@@ -35,6 +35,8 @@ function office_hours_theme_registry_alter(&$theme_registry) {
  * Implements hook_form_FORM_ID_alter().
  */
 function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  // Fix the number of hour blocks to ' two per day'.
+  // IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.
   if ($form['#field']['type'] == 'office_hours') {
     $description = t('14 hours blocks is the current default. See below for limiting it.');
     $description .= '<br/><strong>' . t('Warning! Changing this setting after data has been created could result in the loss of data!') . '</strong>';
@@ -134,7 +136,7 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#options' => array(0 => t('24 hrs'), 1 => t('12 hrs')),
     '#default_value' => $settings['hoursformat'],
     '#required' => FALSE,
-    '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
+    '#description' => t('Format of the clock.'),
   );
   $form['granularity'] = array(
     '#type' => 'select',
@@ -158,7 +160,7 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#default_value' => $settings['valhrs'],
     '#description' => t('Assure that endhours are later then starthours. Please note that this will work as long as the opening hours are not through midnight.'),
   );
-  $hours = _office_hours_show_ampm(date_hours('H'));
+  $hours = _office_hours_show_ampm(date_hours('H'), FALSE);
   $form['limitstart'] = array(
     '#type' => 'select',
     '#title' => t('Limit widget hours - start from'),
@@ -466,8 +468,8 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     $days[$day]['times'][$alt]['end']   = $end;
 
     // Calculate start and end times
-    $startDT = new DateObject(_office_hours_mil_to_tf($start), NULL, 'G:i');
-    $endDT = new DateObject(_office_hours_mil_to_tf($end), NULL, 'G:i');
+    $startDT = new DateObject(_office_hours_time_to_24hr($start), NULL, 'G:i');
+    $endDT = new DateObject(_office_hours_time_to_24hr($end), NULL, 'G:i');
     $startDT->granularity = array('hour', 'minute', 'second');
     $endDT->granularity = array('hour', 'minute', 'second');
     $startDT = @$startDT->merge($currentDT);
@@ -645,10 +647,17 @@ function office_hours_views_api() {
   );
 }
 
+/**
+ * Helper function to convert a range of hours from '13' to '13:00 (01:00 pm)'.
+ * This is used in the Widget settings form.
+ */
 function _office_hours_show_ampm($hours) {
   foreach ($hours as $key => $hour) {
     if (!empty($hour)) {
-      $hours[$key] = $hour . ":00 (" . _office_hours_convert_to_ampm($hour) . ")";
+      $hours[$key] = _office_hours_time_to_24hr($hour . '00')
+                   . ' ('
+                   . _office_hours_convert_to_ampm($hour . '00')
+                   . ')';
     }
   }
   return $hours;
@@ -688,46 +697,68 @@ function _office_hours_arrange_day($items) {
 }
 
 /**
- * Helper function for conversion of clock format.
+ * Helper function to convert a time to a given format.
+ * For formatting options, see http://www.php.net/manual/en/function.date.php
  */
-function _office_hours_convert_to_ampm($hour) {
-  if (!strstr($hour, ":")) {
-    $hour = _office_hours_mil_to_tf($hour);
+function _office_hours_time_format($time, $format) {
+  $date = new DateTime(_office_hours_time_to_24hr($time));
+  return $date->format($format);
+}
+
+/**
+ * Helper function to convert '1630' or '16:30' to '4:30 pm'.
+ * For formatting options, see http://www.php.net/manual/en/function.date.php
+ */
+function _office_hours_convert_to_ampm($time, $format = 'g:i a') {
+  return _office_hours_time_format($time, $format);
+}
+
+/*
+ * Helper function to convert to '08:00' to '0800'
+ */
+function _office_hours_time_to_mil($time) {
+  if (is_null($time)) {
+    return $time;
   }
-  list($hr, $min) = explode(":", $hour);
-  if ($hr== '0') { // midnight
-    $hr = 12;
-    $ampm = ' AM';
-  }
-  elseif ($hr == 12) { // noon
-    $hr = 12;
-    $ampm = ' PM';
-  }
-  elseif ($hr > 12 && $hr < 24) { // a pm time
-    $hr = $hr - 12;
-    $ampm = ' PM';
+  return str_replace(':', '', $time);
+}
+
+/*
+ * Helper function to convert '800' or '0800' to '08:00'
+ */
+function _office_hours_time_to_24hr($time = '') {
+  if (strstr($time, ':')) {
+    return $time;
   }
   else {
-    $ampm =' AM';
+    $time = substr('0000' . $time, -4);
+    $hour = substr($time, 0, -2);
+    $min = substr($time, -2);
+    return $hour . ':' . $min;
   }
-  return $hr . ':' . $min . $ampm;
 }
 
-function _office_hours_tf_to_mil($hour) {
-  if (strstr($hour, ':') == FALSE || is_null($hour)) {
-    return $hour;
+/*
+ * Helper function to convert a time to its 3 elements: hour, minute, ampm.
+ * Mimics the date_parse() function.
+ */
+function _office_hours_time_parse($time, $format) {
+  $hour = '';
+  $min = '';
+  $ampm = 'am';
+
+  if (is_numeric($time)) {
+    if ($format == 1) {  // ampm
+      $time = _office_hours_time_format($time, 'g:i:a');
+    }
+    else { // 24hr
+      $time = _office_hours_time_format($time, 'H:i:a');
+    }
+    list($hour, $min, $ampm) = explode(':', $time);
   }
-  list($hr, $min) = explode(":", $hour);
-  $hr = $hr * 60 + $min;
-  return $hr;
-}
 
-function _office_hours_mil_to_tf($time = '') {
-  $time = substr('0000' . $time, -4);
-  $hour = substr($time, 0, -2);
-  $min = substr($time, -2);
-
-  return $hour . ':' . $min;
+  $result = array('hour' => $hour, 'minute' => $min, 'ampm' => $ampm);
+  return $result;
 }
 
 function _office_hours_set_weight($items) {
