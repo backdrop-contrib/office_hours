@@ -20,15 +20,11 @@ function office_hours_theme($existing, $type, $theme, $path) {
     'office_hours_formatter_default' => $base + array('render element' => 'element'),
     'office_hours_time_range' => $base + array('render element' => 'element'),
     // Widget theming functions.
-    'field_multiple_value_form' => $base + array('render element' => 'element'),
+    'office_hours_week' => $base + array('render element' => 'element'),
     'office_hours_block' => $base + array('render element' => 'element'),
     'office_hours_select' => $base + array('render element' => 'element'),
   );
   return $themes;
-}
-
-function office_hours_theme_registry_alter(&$theme_registry) {
-  $theme_registry['field_multiple_value_form']['function'] = 'office_hours_field_multiple_value_form';
 }
 
 /**
@@ -48,16 +44,6 @@ function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, 
       '#description' => $description,
     );
   }
-}
-
-/**
- * Implements hook_field_is_empty().
- */
-function office_hours_field_is_empty($item, $field) {
-  if ( $item['starthours'] == '' || $item['endhours'] == '' || !isset($item['day']) ) {
-    return TRUE;
-  }
-  return FALSE;
 }
 
 /**
@@ -124,7 +110,7 @@ function office_hours_property_info_callback(&$info, $entity_type, $field, $inst
 /**
  * Implements hook_field_settings_form().
  *
- * Handle the parameters for a field.
+ * Handle the global parameters for a field.
  */
 function office_hours_field_settings_form($field, $instance, $has_data) {
   $settings = $field['settings'];
@@ -187,6 +173,33 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
 function _office_hours_field_settings_form_validate($element, &$form_state) {
   if ($element['limitstart']['#value'] > $element['limitend']['#value']) {
     form_error($element['limitstart'], t('%start is later then %end.', array('%start' => $element['limitstart']['#title'], '%end' => $element['limitend']['#title'] )));
+  }
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function office_hours_field_is_empty($item, $field) {
+  if ( $item['starthours'] == '' || $item['endhours'] == '' || !isset($item['day']) ) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_field_presave().
+ *
+ * Convert day key to a backend value:
+ *  - sunday as first day of week.
+ *  - 14 days based value.
+ */
+function office_hours_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  $first_day = variable_get('date_first_day', 0);
+  foreach ($items as $delta => $item) {
+    // 1. Convert day to sunday based.
+    $day = ($item['day'] + $first_day) % 7;
+    // 2. Convert to 14 days base.
+    $items[$delta]['day'] = ($day * 2) + $item['daydelta'];
   }
 }
 
@@ -575,7 +588,7 @@ function office_hours_field_widget_info() {
       'label' => t('Office hours'),
       'field types' => array('office_hours'),
       'behaviors' => array(
-        'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+        'multiple values' => FIELD_BEHAVIOR_CUSTOM,
         'default value' => FIELD_BEHAVIOR_DEFAULT,
       ),
     ),
@@ -586,13 +599,40 @@ function office_hours_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  $items = _office_hours_arrange_items($items);
+  // Prepare generic element.
   $element += array(
     '#type' => 'office_hours_block',
-    '#default_value' => isset($items[$delta]['starthours']) ? $items[$delta] : NULL,
+    '#hoursformat' => $field['settings']['hoursformat'],
+    '#addhrs' => $field['settings']['addhrs'],
+    '#valhrs' => $field['settings']['valhrs'],
   );
 
-  return $element;
+  // Build elements.
+  $days = date_week_days_ordered(date_week_days(TRUE));
+  //  @todo convert the formatter to work with this representation for $items and move this call to hook_field_load().
+  $items = _office_hours_arrange_field_items($items);
+  $elements = array();
+  for ($day = 0; $day < 7; $day++) {
+    for ($daydelta = 0; $daydelta < 2; $daydelta ++) {
+      $element['#default_value'] = isset($items[$day][$daydelta]['starthours']) ? $items[$day][$daydelta] : NULL;
+      $element['#day'] = $day;
+      $element['#daydelta'] = $daydelta;
+      $element['#dayname'] = $days[$day];
+      $elements[] = $element;
+    }
+  }
+
+  // Build multi element widget.
+  $parents = $form['#parents'];
+  $field_elements = array(
+    '#theme' => 'office_hours_week',
+    '#field_name' => $field['field_name'],
+    '#title' => check_plain($instance['label']),
+    '#required' => $instance['required'],
+    '#description' => field_filter_xss($instance['description']),
+  ) + $elements;
+
+  return $field_elements;
 }
 
 /**
@@ -673,27 +713,25 @@ function _office_hours_limit_hours($hours, $limitstart=0, $limitend=25) {
   return $limitedhours;
 }
 
-function _office_hours_arrange_items($items) {
-  $days = array();
+/**
+ * Arrange items indexed by day and daydelta.
+ *
+ * @param $items array of field values with 'day' key based on 14 possible
+ *    values, 2 for each day (0,1 = Sunday; 2,3 = Monday; 4,5 = Tuesday ...)
+ *
+ * @return two level array. First level are day numbers, ordered in accordance
+ *   with first day of week. Second level contains field values arranged by
+ *   daydelta.
+ */
+function _office_hours_arrange_field_items($items) {
+  $values = array_fill_keys(array(0, 1, 2, 3, 4, 5, 6), array());
   foreach ($items as $item) {
-    $days[$item['day']] = $item;
+    $day = (int)($item['day'] / 2);
+    $daydelta = $item['day'] % 2;
+    $values[$day][$daydelta] = $item;
   }
-  return $days;
-}
 
-function _office_hours_arrange_day($items) {
-  $first = variable_get('date_first_day', 0);
-  while ($first > 0) :
-    $shifted = array_shift($items);
-    $items[] = $shifted;
-    if (isset($items[13])) {
-      $shifted = array_shift($items);
-      $items[] = $shifted;
-    }
-    $first--;
-  endwhile;
-
-  return $items;
+  return date_week_days_ordered($values);
 }
 
 /**
@@ -759,33 +797,6 @@ function _office_hours_time_parse($time, $format) {
 
   $result = array('hour' => $hour, 'minute' => $min, 'ampm' => $ampm);
   return $result;
-}
-
-function _office_hours_set_weight($items) {
-  $sorted = array();
-  foreach (range(0, 13) as $value) {
-    $sorted[$value] = NULL;
-  }
-  foreach ($items as $key => $item) {
-    if (!is_null($item['day'])) {
-      $sortkey= (int)$item['day'];
-      $sortkey = $sortkey * 2;
-      if (!empty($sorted[$sortkey]) && is_array($sorted[$sortkey])) {
-        $sorted[$sortkey+1] = $item;
-      }
-      else {
-        $sorted[$sortkey] = $item;
-      }
-    }
-  }
-  //now fill the empty spaces with null values
-  foreach (range(0, 13) as $value) {
-    if (empty($sorted[$value]) || !is_array($sorted[$value])) {
-      $day = ($value == 0) ? 0 : (($value & 1) ? ( $value - 1) / 2 : $value / 2 );
-      $sorted[$value] = array('starthours' => 0000, 'endhours' => 0000, 'day' => (int)$day);
-    }
-  }
-  return $sorted;
 }
 
 function _office_hours_field_formatter_defaults($settings = array()) {
