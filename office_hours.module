@@ -5,6 +5,7 @@
  */
 
 // @TODO 2012-05-13: it would be nice to include this file in the .info-file, but the OH-block is lost after F5-page refresh.
+// @TODO see http://nodesforbreakfast.com/article/2012/02/20/organize-your-module-code-hookhookinfo-drupal-7
 module_load_include('elements.inc', 'office_hours');
 
 /**
@@ -28,25 +29,6 @@ function office_hours_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter().
- */
-function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
-  // Fix the number of hour blocks to ' two per day'.
-  // IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.
-  if ($form['#field']['type'] == 'office_hours') {
-    $description = t('14 hours blocks is the current default. See below for limiting it.');
-    $description .= '<br/><strong>' . t('Warning! Changing this setting after data has been created could result in the loss of data!') . '</strong>';
-    $form['field']['cardinality'] = array(
-      '#type' => 'select',
-      '#title' => t('Number of values'),
-      '#options' => drupal_map_assoc(array(14)),
-      '#default_value' => 14,
-      '#description' => $description,
-    );
-  }
-}
-
-/**
  * Implements hook_field_info().
  *
  * @return
@@ -65,7 +47,9 @@ function office_hours_field_info() {
         'limitstart' => '',
         'limitend' => '',
         'valhrs' => 0,
-        'addhrs' => 1,
+// mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist 'cardinality'.
+//        'addhrs' => 1,
+        'cardinality' => 2,
       ),
       'default_widget' => 'office_hours',
       'default_formatter' => 'office_hours',
@@ -108,6 +92,29 @@ function office_hours_property_info_callback(&$info, $entity_type, $field, $inst
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Changes the hook_field_settings_form.
+ * 
+ */
+function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  // Fix the number of hour blocks to 'two per day'.
+  // IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.
+  if ($form['#field']['type'] == 'office_hours') {
+    $description = t('14 hours blocks is the current default. See below for limiting it.');
+    $description .= '<br/><strong>' . t('Warning! Changing this setting after data has been created could result in the loss of data!') . '</strong>';
+    $form['field']['cardinality'] = array(
+      '#type' => 'select',
+      '#title' => t('Number of values'),
+      '#options' => drupal_map_assoc(array(14)),
+//      '#options' => drupal_map_assoc(array(14)) + array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(range(1, 10)),
+      '#default_value' => 14,
+      '#description' => $description,
+    );
+  }
+}
+
+/**
  * Implements hook_field_settings_form().
  *
  * Handle the global parameters for a field.
@@ -132,13 +139,32 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#required' => FALSE,
     '#description' => t('Restrict the input to fixed fractions of an hour.'),
   );
+  $form['cardinality'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of blocks'),
+//    '#options' => array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(range(1, 10)),
+    '#options' => drupal_map_assoc(range(1, 2)),
+    '#default_value' => $settings['cardinality'],
+    '#description' => t('The maximum number of blocks, that are allowed per day.'),
+//    '#disabled' => $has_data,
+  );
+
+// mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist.
+// TODO: remove $form['addhrs'] altogether, but only after an explicit field data conversion/update hook.
   $form['addhrs'] = array(
-    '#type' => 'checkbox',
+//    '#type' => 'checkbox',
+    '#type' => 'hidden',
     '#title' => t('Display the "Add more hours" link'),
     '#required' => FALSE,
-    '#default_value' => $settings['addhrs'],
+//    '#default_value' => $settings['addhrs'],
     '#description' => t('Make it possible to use 2 hour block for each day instead of one.'),
   );
+// mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist.
+  if (!is_null($settings['addhrs']) && $settings['addhrs'] == 0 && $settings['cardinality'] == 2) {
+    $form['addhrs']['#default_value'] = 1;
+    $form['cardinality']['#default_value'] = 1;
+  }
+
   $form['valhrs'] = array(
     '#type' => 'checkbox',
     '#title' => t('Validate hours'),
@@ -185,6 +211,12 @@ function office_hours_field_is_empty($item, $field) {
   }
   return FALSE;
 }
+
+/**
+ * Implements hook_field_load().
+ */
+//function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, $items, $age) {
+//}
 
 /**
  * Implements hook_field_presave().
@@ -468,9 +500,10 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
   $next = NULL;
 
   // Loop through all lines. Detect the current line and the open/closed status.
-  // Convert the daynumber to (int) for Sundays, to get ' 0', not 'false'.
+  // Convert the daynumber to (int) for Sundays, to get '0', not 'false'.
   foreach (element_children($items) as $key => $arraykey) {
     $el  = $items[$arraykey];
+
     $day = (int)($el['day'] / 2);
     $alt = (int)($el['day'] % 2);
 
@@ -603,7 +636,8 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
   $element += array(
     '#type' => 'office_hours_block',
     '#hoursformat' => $field['settings']['hoursformat'],
-    '#addhrs' => $field['settings']['addhrs'],
+//    '#addhrs' => $field['settings']['addhrs'],
+    '#cardinality' => $field['settings']['cardinality'],
     '#valhrs' => $field['settings']['valhrs'],
   );
 
@@ -800,7 +834,6 @@ function _office_hours_time_parse($time, $format) {
 }
 
 function _office_hours_field_formatter_defaults($settings = array()) {
-
   // Assure all values are set. Append with missing values.
   $settings +=
     array(

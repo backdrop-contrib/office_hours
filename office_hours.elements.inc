@@ -23,13 +23,14 @@ function _office_hours_block_process($element, &$form_state, $form) {
   if ($element['#daydelta'] == 0) { // first cell, show dayname
     $element['#prefix'] = '<div class="office-hours-block"><div class="dayname">' . t($element['#dayname']) . '</div>';
   }
-  elseif ($field_settings['addhrs']) {  // second cell, we're supposed to show the 'add hours link'
+  elseif ($field_settings['cardinality'] != 1) {  // second cell, we're supposed to show the 'add hours link'
     $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link'))) . '<div class="office-hours-block" style = "display:none;">' . '<div class="dayname">' . t('and') . '</div>';
     $element['#prefix'] = isset($element['#value'][$field_strhrs]) ? '<div class="office-hours-block">' . '<div class="dayname">' . t('and') . '</div>' : $link;
   }
   else { //this is the second cell and were not showing it- better clear it (in case a value was entered before).
     $element['#prefix'] = "<div class='oh-hide'>";
     $element['#value'][$field_strhrs] = '';
+    $element['#value'][$field_endhrs] = '';
   }
   $element['#suffix'] = '</div>';
   $element['day'] = array(
@@ -144,7 +145,6 @@ function _office_hours_block_validate($element, &$form_state) {
   $valhrs = $field_settings['valhrs'];
   $limitstart = $field_settings['limitstart'];
   $limitend = $field_settings['limitend'];
-
   if (!empty($item['starthours']) xor !empty($item['endhours']) ) {
     $error_text = 'Both Opening hours and Closing hours must be set.';
   }
