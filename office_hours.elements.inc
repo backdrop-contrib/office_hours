@@ -14,23 +14,17 @@
  * note that $element['#value'] is already set.
  */
 function _office_hours_block_process($element, &$form_state, $form) {
-  $field_settings = _office_hours_get_field_settings($element, $form_state);
-
-  $field_day = $element['#columns'][0];
-  $field_strhrs = $element['#columns'][1];
-  $field_endhrs = $element['#columns'][2];
-
   if ($element['#daydelta'] == 0) { // first cell, show dayname
     $element['#prefix'] = '<div class="office-hours-block"><div class="dayname">' . t($element['#dayname']) . '</div>';
   }
-  elseif ($field_settings['cardinality'] != 1) {  // second cell, we're supposed to show the 'add hours link'
+  elseif ($element['#field_settings']['cardinality'] != 1) {  // second cell, we're supposed to show the 'add hours link'
     $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link'))) . '<div class="office-hours-block" style = "display:none;">' . '<div class="dayname">' . t('and') . '</div>';
-    $element['#prefix'] = isset($element['#value'][$field_strhrs]) ? '<div class="office-hours-block">' . '<div class="dayname">' . t('and') . '</div>' : $link;
+    $element['#prefix'] = isset($element['#value']['starthours']) ? '<div class="office-hours-block">' . '<div class="dayname">' . t('and') . '</div>' : $link;
   }
   else { //this is the second cell and were not showing it- better clear it (in case a value was entered before).
     $element['#prefix'] = "<div class='oh-hide'>";
-    $element['#value'][$field_strhrs] = '';
-    $element['#value'][$field_endhrs] = '';
+    $element['#value']['starthours'] = '';
+    $element['#value']['endhours'] = '';
   }
   $element['#suffix'] = '</div>';
   $element['day'] = array(
@@ -41,25 +35,17 @@ function _office_hours_block_process($element, &$form_state, $form) {
     '#type' => 'value',
     '#value' => $element['#daydelta'],
   );
-  $element[$field_strhrs] = array(
+  $element['starthours'] = array(
     '#type' => 'office_hours_select',
     '#prefix' => ' ' . t('from'),
-    '#default_value' => isset($element['#value'][$field_strhrs]) ? $element['#value'][$field_strhrs] : NULL ,
-    '#granularity' => $field_settings['granularity'],
-    '#valhrs' => $field_settings['valhrs'],
-    '#hoursformat' => $field_settings['hoursformat'],
-    '#limitstart' => $field_settings['limitstart'],
-    '#limitend' => $field_settings['limitend'],
-  );
-  $element[$field_endhrs] = array(
+    '#default_value' => isset($element['#value']['starthours']) ? $element['#value']['starthours'] : NULL ,
+    '#field_settings' => $element['#field_settings'],
+  ); 
+  $element['endhours'] = array(
     '#type' => 'office_hours_select',
     '#prefix' => t('until'),
-    '#default_value' => isset($element['#value'][$field_endhrs]) ? $element['#value'][$field_endhrs] : NULL,
-    '#granularity' => $field_settings['granularity'],
-    '#valhrs' => $field_settings['valhrs'],
-    '#hoursformat' => $field_settings['hoursformat'],
-    '#limitstart' => $field_settings['limitstart'],
-    '#limitend' => $field_settings['limitend'],
+    '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
+    '#field_settings' => $element['#field_settings'],
   );
 
   return $element;
@@ -71,18 +57,19 @@ function _office_hours_block_process($element, &$form_state, $form) {
  */
 function _office_hours_select_value_callback($element, $input = FALSE, &$form_state) {
   // return array('hour' => $hour, 'minute' => $minute, 'ampm' => $ampm);
-  return _office_hours_time_parse($element['#default_value'], $element['#hoursformat']);
+  return _office_hours_time_parse($element['#default_value'], $element['#field_settings']['hoursformat']);
 }
 
 /**
  * Process the office_hours_select element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
-  $minutes = date_minutes('i', FALSE, $element['#granularity']);
-  $hours = ($element['#hoursformat'] == 1) ? date_hours('g') : date_hours('H');
+  $minutes = date_minutes('i', FALSE, $element['#field_settings']['granularity']);
+  $hours = ($element['#field_settings']['hoursformat'] == 1) ? date_hours('g') : date_hours('H');
   if (!empty($element['#limitstart']) || !empty($element['#limitend']) ) {
     $hours = _office_hours_limit_hours($hours, $element['#limitstart'], $element['#limitend']);
   }
+
   $element['hours'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc($hours),
@@ -93,7 +80,7 @@ function _office_hours_select_process($element, &$form_state, $form) {
     '#options' => drupal_map_assoc($minutes),
     '#default_value' => $element['#value']['minute'],
   );
-  if ($element['#hoursformat'] == 1) {
+  if ($element['#field_settings']['hoursformat'] == 1) {
     $element['ampm'] = array(
       '#type' => 'select',
       '#options' => date_ampm(),
@@ -110,7 +97,7 @@ function _office_hours_select_process($element, &$form_state, $form) {
 function _office_hours_select_validate($element, &$form_state) {
   $hours = $element['hours']['#value'];
   $minutes = ($element['minutes']['#value'] == 0) ? '00' : $element['minutes']['#value'];
-  if ($element['#hoursformat'] == 1) {
+  if ($element['#field_settings']['hoursformat'] == 1) {
     if ($element['ampm']['#value'] == 'pm' && $hours < 12) $hours += 12;
     if ($element['ampm']['#value'] == 'am' && $hours == 12) $hours = '00';
   }
@@ -137,14 +124,12 @@ function _office_hours_select_validate($element, &$form_state) {
  * which is set in _office_hours_select_validate().
  */
 function _office_hours_block_validate($element, &$form_state) {
-  $field_settings = _office_hours_get_field_settings($element, $form_state);
-
   $item = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
 
   $error_text = '';
-  $valhrs = $field_settings['valhrs'];
-  $limitstart = $field_settings['limitstart'];
-  $limitend = $field_settings['limitend'];
+  $valhrs = $element['#field_settings']['valhrs'];
+  $limitstart = $element['#field_settings']['limitstart'];
+  $limitend = $element['#field_settings']['limitend'];
   if (!empty($item['starthours']) xor !empty($item['endhours']) ) {
     $error_text = 'Both Opening hours and Closing hours must be set.';
   }
@@ -170,25 +155,4 @@ function _office_hours_block_validate($element, &$form_state) {
 
     form_error($element, check_plain($error_text));
   }
-}
-
-/**
- * Gets the data from an array, to cater for the Profile2 array
- */
-function _office_hours_get_field_settings($element, &$form_state) {
-  if (isset( $form_state['field'][$element['#field_name']]) ) {
-    $field_settings = &$form_state['field'][$element['#field_name']][$element['#language']]['field']['settings'];
-  }
-  else {
-    // This is to cater for the Profile2 edit page.
-    $parents = array_slice($element['#array_parents'], 2, -1);
-    $parents = array('#parents', $element['#array_parents'][0], '#fields');
-    $parents[] = $element['#field_name'];
-    $parents[] = $element['#language'];
-    $parents[] = 'field';
-    $parents[] = 'settings';
-
-    $field_settings = drupal_array_get_nested_value($form_state['field'], $parents);
-  }
-  return $field_settings;
 }

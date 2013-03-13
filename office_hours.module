@@ -215,7 +215,7 @@ function office_hours_field_is_empty($item, $field) {
 /**
  * Implements hook_field_load().
  */
-//function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, $items, $age) {
+//function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
 //}
 
 /**
@@ -496,7 +496,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
   if ($timezone) {
     $currentDT->setTimezone(new DateTimeZone($timezone));
   }
-  $today = (int)$currentDT->format('N')  % 7;  // Convert from Sunday from 7 to 0.
+  $today = (int)$currentDT->format('w');  // Convert to daynumber sun=0 - sat=6.
   $next = NULL;
 
   // Loop through all lines. Detect the current line and the open/closed status.
@@ -632,14 +632,8 @@ function office_hours_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  // Prepare generic element.
-  $element += array(
-    '#type' => 'office_hours_block',
-    '#hoursformat' => $field['settings']['hoursformat'],
-//    '#addhrs' => $field['settings']['addhrs'],
-    '#cardinality' => $field['settings']['cardinality'],
-    '#valhrs' => $field['settings']['valhrs'],
-  );
+  // Get field settings, to make it accessible for each element in other functions.
+  $element['#field_settings'] = $field['settings'];
 
   // Build elements.
   $days = date_week_days_ordered(date_week_days(TRUE));
@@ -648,10 +642,12 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
   $elements = array();
   for ($day = 0; $day < 7; $day++) {
     for ($daydelta = 0; $daydelta < 2; $daydelta ++) {
+      $element['#type'] = 'office_hours_block';
       $element['#default_value'] = isset($items[$day][$daydelta]['starthours']) ? $items[$day][$daydelta] : NULL;
       $element['#day'] = $day;
       $element['#daydelta'] = $daydelta;
       $element['#dayname'] = $days[$day];
+
       $elements[] = $element;
     }
   }
