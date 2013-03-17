@@ -29,17 +29,15 @@ function theme_office_hours_formatter_default($vars) {
     }
     else {
       $times = array();
-      for ($alt = 0; $alt < 2; $alt++) {
-        if (isset($info['times'][$alt])) {
-          $times[] = theme(
-                      'office_hours_time_range',
-                      array(
-                        'times'       => $info['times'][$alt],
-                        'format'      => empty($settings['hoursformat']) ? 'G:i' : 'g:i a',
-                        'separator'   => $settings['separator_hours_hours'],
-                      )
-                    );
-        }
+      foreach ($info['times'] as $block_times) {
+        $times[] = theme(
+                    'office_hours_time_range',
+                    array(
+                      'times'       => $block_times,
+                      'format'      => empty($settings['hoursformat']) ? 'G:i' : 'g:i a',
+                      'separator'   => $settings['separator_hours_hours'],
+                    )
+                  );
       }
       $times = implode($settings['separator_more_hours'], $times);
     }

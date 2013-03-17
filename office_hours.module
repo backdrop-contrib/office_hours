@@ -6,6 +6,8 @@
 
 // @TODO 2012-05-13: it would be nice to include this file in the .info-file, but the OH-block is lost after F5-page refresh.
 // @TODO see http://nodesforbreakfast.com/article/2012/02/20/organize-your-module-code-hookhookinfo-drupal-7
+
+// @todo for 'multiple blocks per day', see code with string 'multiple blocks per day'.
 module_load_include('elements.inc', 'office_hours');
 
 /**
@@ -48,6 +50,7 @@ function office_hours_field_info() {
         'limitend' => '',
         'valhrs' => 0,
 // mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist 'cardinality'.
+// @todo for 'multiple blocks per day': create hook_update_N().
 //        'addhrs' => 1,
         'cardinality' => 2,
       ),
@@ -72,6 +75,14 @@ function office_hours_property_info_callback(&$info, $entity_type, $field, $inst
     'type' => 'integer',
     'label' => t('Day'),
     'description' => 'Stores the day value',
+    'setter callback' => 'entity_property_verbatim_set',
+    'default' => 0,
+  );
+// @todo for 'multiple blocks per day': do we need this 'daynum' property?
+  $property['property info']['daynum'] = array(
+    'type' => 'integer',
+    'label' => t('Weekday'),
+    'description' => "Stores the day of the week's numeric representation (0-6)",
     'setter callback' => 'entity_property_verbatim_set',
     'default' => 0,
   );
@@ -101,16 +112,17 @@ function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, 
   // Fix the number of hour blocks to 'two per day'.
   // IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.
   if ($form['#field']['type'] == 'office_hours') {
-    $description = t('14 hours blocks is the current default. See below for limiting it.');
-    $description .= '<br/><strong>' . t('Warning! Changing this setting after data has been created could result in the loss of data!') . '</strong>';
+    $description = t("This is unlimited by this field's nature. See below for limiting the number of blocks per day.");
     $form['field']['cardinality'] = array(
       '#type' => 'select',
       '#title' => t('Number of values'),
-      '#options' => drupal_map_assoc(array(14)),
 //      '#options' => drupal_map_assoc(array(14)) + array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(range(1, 10)),
-      '#default_value' => 14,
+//      '#options' => drupal_map_assoc(array(14)),
+//      '#default_value' => 14,
+      '#options' => array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')),
+      '#default_value' => FIELD_CARDINALITY_UNLIMITED,
       '#description' => $description,
-    );
+   );
   }
 }
 
@@ -123,6 +135,38 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
   $settings = $field['settings'];
   $form = array();
   $form['#element_validate'] = array('_office_hours_field_settings_form_validate');
+  $description = t('The maximum number of blocks, that are allowed per day.');
+  $description .= '<br/><strong>' . t('Warning! Lowering this setting after data has been created could result in the loss of data!') . '</strong><br/>';
+  $description .= t('Be careful when using more then 2 blocks per day, since not all external services (like Google Places) support this.');
+  $form['cardinality'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of blocks'),
+// @todo for 'multiple blocks per day': add support for FIELD_CARDINALITY_UNLIMITED.
+//    '#options' => array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(range(1, 10)),
+//    '#options' => drupal_map_assoc(range(1, 2)),
+    '#options' => drupal_map_assoc(range(1, 12)),
+    '#default_value' => $settings['cardinality'],
+    '#description' => $description,
+//    '#disabled' => $has_data,
+  );
+
+// mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist.
+// @todo for 'multiple blocks per day': remove, after create hook_update_N().
+  $form['addhrs'] = array(
+//    '#type' => 'checkbox',
+    '#type' => 'hidden',
+    '#title' => t('Display the "Add more hours" link'),
+    '#required' => FALSE,
+    '#default_value' => $settings['addhrs'],
+    '#description' => t('Make it possible to use 2 hour block for each day instead of one.'),
+  );
+// mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist.
+// @todo for 'multiple blocks per day': remove, after create hook_update_N().
+  if (!is_null($settings['addhrs']) && $settings['addhrs'] == 0 && $settings['cardinality'] == 2) {
+    $form['addhrs']['#default_value'] = 1;
+    $form['cardinality']['#default_value'] = 1;
+  }
+
   $form['hoursformat'] = array(
     '#type' => 'select',
     '#title' => t('Hours format'),
@@ -139,32 +183,6 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#required' => FALSE,
     '#description' => t('Restrict the input to fixed fractions of an hour.'),
   );
-  $form['cardinality'] = array(
-    '#type' => 'select',
-    '#title' => t('Number of blocks'),
-//    '#options' => array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(range(1, 10)),
-    '#options' => drupal_map_assoc(range(1, 2)),
-    '#default_value' => $settings['cardinality'],
-    '#description' => t('The maximum number of blocks, that are allowed per day.'),
-//    '#disabled' => $has_data,
-  );
-
-// mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist.
-// TODO: remove $form['addhrs'] altogether, but only after an explicit field data conversion/update hook.
-  $form['addhrs'] = array(
-//    '#type' => 'checkbox',
-    '#type' => 'hidden',
-    '#title' => t('Display the "Add more hours" link'),
-    '#required' => FALSE,
-//    '#default_value' => $settings['addhrs'],
-    '#description' => t('Make it possible to use 2 hour block for each day instead of one.'),
-  );
-// mar-2013: Conversion from (old) checkbox "Add more hours" to (new) selectlist.
-  if (!is_null($settings['addhrs']) && $settings['addhrs'] == 0 && $settings['cardinality'] == 2) {
-    $form['addhrs']['#default_value'] = 1;
-    $form['cardinality']['#default_value'] = 1;
-  }
-
   $form['valhrs'] = array(
     '#type' => 'checkbox',
     '#title' => t('Validate hours'),
@@ -214,9 +232,28 @@ function office_hours_field_is_empty($item, $field) {
 
 /**
  * Implements hook_field_load().
+ *
+ * Converts the database 'day' values from old value to new value.
+ * This is to allow for >2 blocks per day.
+ * Old system: 0,2,4,etc is first block of day, 1,3,5,etc is second.
+ * New system: 'daynum' = 0-6, 'delta' is overall delta.
+ * N.B. only $items should be changed.
+ * 
+ * NB. This hook is not called in the widget settings page. See http://drupal.org/node/1944678, 
  */
-//function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
-//}
+function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
+  foreach ($items as $object => $object_items) {
+    foreach ($object_items as $index => $item) {
+      $daynum = (int) ($item['day'] / 2);
+      $items[$object][$index]['daynum'] = $daynum;
+    }
+
+// @todo for 'multiple blocks per day': do the following in hook_field_load(). But only if it works in *_widget_form(), too.
+//    unset($items[$object]);
+//    $items[$object] = _office_hours_arrange_field_items($object_items);
+
+  }
+}
 
 /**
  * Implements hook_field_presave().
@@ -224,6 +261,9 @@ function office_hours_field_is_empty($item, $field) {
  * Convert day key to a backend value:
  *  - sunday as first day of week.
  *  - 14 days based value.
+ *
+ * NB. This hook is not called in the widget settings page. See http://drupal.org/node/1944678, 
+ *     Luckily it works in both cases: in Node edit form AND in widget form.
  */
 function office_hours_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
   $first_day = variable_get('date_first_day', 0);
@@ -231,7 +271,7 @@ function office_hours_field_presave($entity_type, $entity, $field, $instance, $l
     // 1. Convert day to sunday based.
     $day = ($item['day'] + $first_day) % 7;
     // 2. Convert to 14 days base.
-    $items[$delta]['day'] = ($day * 2) + $item['daydelta'];
+    $items[$delta]['day'] = ($day * 2);
   }
 }
 
@@ -251,7 +291,7 @@ function office_hours_field_formatter_info() {
   return array(
     'office_hours' => array(
       'label' => t('Office hours'),
-      'field types' =>  array('office_hours',),
+      'field types' => array('office_hours',),
       'settings' => _office_hours_field_formatter_defaults(),
     ),
   );
@@ -504,14 +544,15 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
   foreach (element_children($items) as $key => $arraykey) {
     $el  = $items[$arraykey];
 
-    $day = (int)($el['day'] / 2);
-    $alt = (int)($el['day'] % 2);
-
+    $day = $el['daynum'];
     $start = check_plain($el['starthours']);
     $end   = check_plain($el['endhours']);
 
-    $days[$day]['times'][$alt]['start'] = $start;
-    $days[$day]['times'][$alt]['end']   = $end;
+    $times = array (
+        'start' => $start,
+        'end' => $end,
+      );
+    $days[$day]['times'][] = $times;
 
     // Calculate start and end times
     $startDT = new DateObject(_office_hours_time_to_24hr($start), NULL, 'G:i');
@@ -558,16 +599,21 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     $days[(int)$next]['next'] = TRUE;
   }
 
-  // Re-sort lines array for the correct starting day
+  // Reorder weekdays to match the first day of the week, using variable_get('date_first_day');
   $days = date_week_days_ordered($days);
 
   // Check if we're compressing times. If so, combine lines of the same day into one.
   if ($settings['compress']) {
     foreach ($days as $day => &$info) {
-      if (isset($info['times'][0]) && isset($info['times'][1])) {
-        $info['times'][0]['start'] = min($info['times'][0]['start'], $info['times'][1]['start']);
-        $info['times'][0]['end']   = max($info['times'][0]['end'], $info['times'][1]['end']);
-        unset($info['times'][1]);
+      if (is_array($info['times'])) {
+        // Initialize first block of the day.
+        $day_times = $info['times'][0]; 
+        // Compress other block in first block.
+        foreach($info['times'] as $index => $block_times) {
+          $day_times['start'] = min($day_times['start'], $block_times['start']);
+          $day_times['end']   = max($day_times['end'], $block_times['end']);
+        }
+        $info['times'] = array(0 => $day_times);
       }
     }
   }
@@ -634,14 +680,22 @@ function office_hours_field_widget_info() {
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   // Get field settings, to make it accessible for each element in other functions.
   $element['#field_settings'] = $field['settings'];
+  $cardinality = $field['settings']['cardinality'];
 
   // Build elements.
+
+  //Get the day names, ordered to match the first day of the week, according to system settings.
   $days = date_week_days_ordered(date_week_days(TRUE));
+
   //  @todo convert the formatter to work with this representation for $items and move this call to hook_field_load().
+  //  @todo Issue: hook_field_load() is not called here, so we must do it ourselves.
   $items = _office_hours_arrange_field_items($items);
+
   $elements = array();
+
   for ($day = 0; $day < 7; $day++) {
-    for ($daydelta = 0; $daydelta < 2; $daydelta ++) {
+    // todo: theme_function clears values above cardinality. move it here.
+    for ($daydelta = 0; $daydelta < max(2, $cardinality); $daydelta ++) {
       $element['#type'] = 'office_hours_block';
       $element['#default_value'] = isset($items[$day][$daydelta]['starthours']) ? $items[$day][$daydelta] : NULL;
       $element['#day'] = $day;
@@ -754,14 +808,18 @@ function _office_hours_limit_hours($hours, $limitstart=0, $limitend=25) {
  *   daydelta.
  */
 function _office_hours_arrange_field_items($items) {
+// todo: remove day and daynum from items.
   $values = array_fill_keys(array(0, 1, 2, 3, 4, 5, 6), array());
-  foreach ($items as $item) {
-    $day = (int)($item['day'] / 2);
-    $daydelta = $item['day'] % 2;
-    $values[$day][$daydelta] = $item;
+  foreach ($items as $index => $item) {
+    $daynum = (int) ($item['day'] / 2);
+    $items[$index]['daynum'] = $daynum;
+    $values[$daynum][] = $item;
   }
 
-  return date_week_days_ordered($values);
+  // Reorder weekdays to match the first day of the week, using variable_get('date_first_day');
+  $values = date_week_days_ordered($values);
+
+  return $values;
 }
 
 /**
