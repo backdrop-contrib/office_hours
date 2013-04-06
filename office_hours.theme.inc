@@ -123,9 +123,12 @@ function theme_office_hours_time_range($vars = array()) {
     'separator' => ' - ',
   );
 
-  $result = _office_hours_time_format($vars['times']['start'], $vars['format'])
-          . $vars['separator']
-          . _office_hours_time_format($vars['times']['end'], $vars['format']);
+  $starttime = _office_hours_time_format($vars['times']['start'], $vars['format']);
+  $endtime = _office_hours_time_format($vars['times']['end'], $vars['format']);
+  if ($endtime == '0:00' || $endtime == '00:00') {
+    $endtime = '24:00';
+  }
+  $result = $starttime . $vars['separator'] . $endtime;
   return $result;
 }
 
