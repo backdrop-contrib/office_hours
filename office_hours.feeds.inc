@@ -1,4 +1,4 @@
-<?php
+ï»¿<?php
 
 /**
  * @file
@@ -115,7 +115,7 @@ function office_hours_feeds_set_target($source, $entity, $target, $feed_element)
         switch (strtolower(substr($feed_element, 0, 3))) {
           case 'sun': //en
           case 'zon': //nl
-          case 'søn': //da
+          case 'sÃ¸n': //da
             $sv_day = '0';
             break;
           case 'mon': //en
@@ -145,7 +145,7 @@ function office_hours_feeds_set_target($source, $entity, $target, $feed_element)
             break;
           case 'sat':
           case 'zat':
-          case 'lør':
+          case 'lÃ¸r':
             $sv_day = '6';
             break;
         }
