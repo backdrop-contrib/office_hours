@@ -147,7 +147,6 @@ function _office_hours_block_validate($element, &$form_state) {
   if ($error_text) {
     $weekdays = date_week_days(TRUE);
     $error_text  = t('!weekday: ' . $error_text,   
-//                     array('!weekday' => $weekdays[$delta / 2],
                      array('!weekday' => $element['#dayname'],
                            '!start' => $limitstart . ':00' ,
                            '!end' =>$limitend . ':00',

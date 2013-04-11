@@ -121,38 +121,38 @@ function office_hours_feeds_set_target($source, $entity, $target, $feed_element)
           case 'mon': //en
           case 'maa': //nl
           case 'man': //da
-            $sv_day = '2';
+            $sv_day = '1';
             break;
           case 'tue': //en
           case 'din': //nl
           case 'tir': //da
-            $sv_day = '4';
+            $sv_day = '2';
             break;
           case 'wed':
           case 'woe':
           case 'ons':
-            $sv_day = '6';
+            $sv_day = '3';
             break;
           case 'thu':
           case 'don':
           case 'tor':
-            $sv_day = '8';
+            $sv_day = '4';
             break;
           case 'fri':
           case 'vri':
           case 'fre':
-            $sv_day = '10';
+            $sv_day = '5';
             break;
           case 'sat':
           case 'zat':
           case 'lør':
-            $sv_day = '12';
+            $sv_day = '6';
             break;
         }
       }
       else {
-        // day is passed as day number: sunday: 1->0; monday: 2->2; tuesday: 3->4; etc.
-        $sv_day = ( $feed_element - 1 ) * 2 ;
+        // day is passed as day number: sunday: 1->0; monday: 2->1; tuesday: 3->2; etc.
+        $sv_day = ( $feed_element - 1 );
       }
 
 //      $sv_office_hours['day'] = $sv_day;
@@ -176,19 +176,19 @@ function office_hours_feeds_set_target($source, $entity, $target, $feed_element)
       $feed_element = str_replace( '.' , '' , $feed_element);
       switch ($start_end_field) {
         case 'start':
-            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day + $morehours;
+            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day;
             $entity->{$field_name}[$entity->language][$sv_index]['starthours'] = intval($feed_element);
 //          $sv_office_hours[$morehours]['starthours'] = intval($feed_element);
           break;
         case 'end':
-            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day + $morehours;
+            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day;
             $entity->{$field_name}[$entity->language][$sv_index]['endhours'] = intval($feed_element);
 //          $sv_office_hours[$morehours]['endhours'] = intval($feed_element);
           break;
         default:
-          // $feed_element contains both start and end
-          list($hours_start, $hours_end) = explode('-', $feed_element, 2);
-            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day + $morehours;
+            // $feed_element contains both Start and End.
+            list($hours_start, $hours_end) = explode('-', $feed_element, 2);
+            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day;
             $entity->{$field_name}[$entity->language][$sv_index]['starthours'] = intval($hours_start);
             $entity->{$field_name}[$entity->language][$sv_index]['endhours'] = intval($hours_end);
 //          $sv_office_hours[$morehours]['starthours'] = intval($hours_start);
