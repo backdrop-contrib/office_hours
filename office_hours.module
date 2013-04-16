@@ -311,14 +311,20 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#title' => t('Number of days to show'),
     '#options' => array('all' => t('Show all days'), 'open' => t('Show only open days'), 'next' => t('Show next open day'), 'none' => t('Hide all days')),
     '#default_value' => $settings['showclosed'],
-    '#description' => t('Which days hould be shown in the formatter. Useful in combination with the Current Status block.'),
+    '#description' => t('The days to show in the formatter. Useful in combination with the Current Status block.'),
+  );
+  // first day of week, copied from system.variable.inc.
+  $form['date_first_day'] = array(
+    '#type' => 'select',
+    '#options' => date_week_days(TRUE),
+    '#title' => t('First day of week'),
+    '#default_value' => $settings['date_first_day'],
   );
   $form['daysformat'] = array(
     '#type' => 'select',
     '#title' => t('Day notation'),
     '#options' => array('long' => t('long'), 'short' => t('short'), 'number' => t('number'), 'none' => t('none')),
     '#default_value' => $settings['daysformat'],
-    '#description' => t('Display the day.'),
   );
   $form['hoursformat'] = array(
     '#type' => 'select',
@@ -326,7 +332,6 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#options' => array(0 => t('24 hrs'), 1 => t('12 hrs')),
     '#default_value' => $settings['hoursformat'],
     '#required' => FALSE,
-    '#description' => t('Format of the clock. IMPORTANT NOTE: if you do not select "Multiple values", you can enter only one day.'),
   );
   $form['compress'] = array(
     '#title' => t('Compress Hours + More hours into one set'),
@@ -463,7 +468,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
 
   $settings = _office_hours_field_formatter_defaults($display['settings']);
 
-  // Get daynames, using date_api as key: 0=Sun - 6=Sat.
+  // Get daynames, using date_api as key (0=Sun, 6-Sat).
   switch ($settings['daysformat']) {
     case 'number':
       $daynames = range(1, 7); // ISO-8601 numerical representation
@@ -563,8 +568,14 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     $days[(int)$next]['next'] = TRUE;
   }
 
-  // Reorder weekdays to match the first day of the week, using variable_get('date_first_day');
-  $days = date_week_days_ordered($days);
+  // Reorder weekdays to match the first day of the week, using formatter settings;
+  // $days = date_week_days_ordered($days);  //using variable_get('date_first_day');
+  if ($settings['date_first_day'] > 0) {
+    for ($i = 1; $i <= $settings['date_first_day']; $i++) {
+      $last = array_shift($days);
+      array_push($days, $last);
+    }
+  }
 
   // Check if we're compressing times. If so, combine lines of the same day into one.
   if ($settings['compress']) {
@@ -873,6 +884,7 @@ function _office_hours_field_formatter_defaults($settings = array()) {
         'closed_text' => 'Currently closed',
       ),
       'timezone_field' => '',
+      'date_first_day' => variable_get('date_first_day', 0),
     );
 
   // Conversion from (old) checkbox to (new) selectlist.
