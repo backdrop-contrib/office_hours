@@ -1090,17 +1090,13 @@ function _office_hours_update_7100_daynum() {
             }
           }
         }
-//if ($id == 30888) {
-//if ($id == 110780) {
-//dpm($full_entity);
         // Prevent core-error #985642, which should be fixed per D7.22
         $full_entity->original = $full_entity;
 
-        field_attach_presave($entity_type, $full_entity);
+//        field_attach_presave($entity_type, $full_entity);  // this unnecesarily shifts the days.
         field_attach_update($entity_type, $full_entity);
         variable_set('office_hours-' . $entity_type . '-' . $bundle . '-' . $field_id , $id);
       }
-//}
     }
   }
 
