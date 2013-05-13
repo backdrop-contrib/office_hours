@@ -458,7 +458,7 @@ function office_hours_field_formatter_settings_summary($field, $instance, $view_
 /**
  * Implements hook_field_formatter_view().
  *
- * Be careful: date_api uses 0=Sunday, and DateObject uses ISO: 1=Sunday.
+ * Be careful: date_api uses PHP: 0=Sunday, and DateObject uses ISO: 1=Sunday.
  */
 function office_hours_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
@@ -466,9 +466,10 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     return $element;
   }
 
+  // Initialize formatter settings.
   $settings = _office_hours_field_formatter_defaults($display['settings']);
 
-  // Get daynames, using date_api as key (0=Sun, 6-Sat).
+  // Initialize daynames, using date_api as key: 0=Sun - 6=Sat.
   switch ($settings['daysformat']) {
     case 'number':
       $daynames = range(1, 7); // ISO-8601 numerical representation
@@ -485,7 +486,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
       break;
   }
 
-  // Populate days and times, using date_api as key (0=Sun, 6-Sat)
+  // Initialize days and times, using date_api as key (0=Sun, 6-Sat)
   // Empty days are not yet present in $items, and are now added in $days.
   $days = array();
   for ($day = 0; $day < 7; $day++) {
@@ -498,38 +499,31 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     );
   }
 
-  $open = FALSE;
   $timezone = NULL; // @TODO
 
-  $currentDT = new DateObject('now');
-  if ($timezone) {
-    $currentDT->setTimezone(new DateTimeZone($timezone));
-  }
-  $today = (int)$currentDT->format('w');  // Convert to daynumber sun=0 - sat=6.
+  // Avoid repetitive calculations, use static. See http://drupal.org/node/1969956
+  // And even better, avoid the expensive DateObject.
+  $today = (int)idate('w', $_SERVER['REQUEST_TIME']);  // Get daynumber sun=0 - sat=6.
+  $now = date('Gi', $_SERVER['REQUEST_TIME']); // 'Gi' format.
+
+  $open = FALSE;
   $next = NULL;
 
   // Loop through all lines. Detect the current line and the open/closed status.
-  // Convert the daynumber to (int) for Sundays, to get '0', not 'false'.
+  // Convert the daynumber to (int) to get '0' for Sundays, not 'false'.
   foreach (element_children($items) as $key => $arraykey) {
     $el  = $items[$arraykey];
 
+    // Calculate start and end times
     $day = $el['day'];
-    $start = check_plain($el['starthours']);
-    $end   = check_plain($el['endhours']);
+    $start = _office_hours_time_to_mil($el['starthours']); // 'Gi' format.
+    $end   = _office_hours_time_to_mil($el['endhours']); // 'Gi' format.
 
     $times = array (
         'start' => $start,
         'end' => $end,
       );
     $days[$day]['times'][] = $times;
-
-    // Calculate start and end times
-    $startDT = new DateObject(_office_hours_time_to_24hr($start), NULL, 'G:i');
-    $endDT = new DateObject(_office_hours_time_to_24hr($end), NULL, 'G:i');
-    $startDT->granularity = array('hour', 'minute', 'second');
-    $endDT->granularity = array('hour', 'minute', 'second');
-    $startDT = @$startDT->merge($currentDT);
-    $endDT = @$endDT->merge($currentDT);
 
     // Are we currently open? If not, when is the next time?
     // Remember: empty days are not in $items; they are present in $days.
@@ -540,11 +534,11 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
       }
     }
     elseif ($day == $today) {
-      if ($startDT->difference($currentDT, 'seconds', FALSE) >= 0) {
+      if ($start <= $now) {
         // we were open today, check if we are still open.
         if ( ($start > $end)    // we are open until after midnight.
             || ($start == $end) // we are open 24hrs per day.
-            || (($start < $end) && ($endDT->difference($currentDT, 'seconds', FALSE) < 0))) {
+            || (($start < $end) && ($end > $now))) { // we have closed already.
           $open = TRUE;
           $days[$day]['current'] = TRUE;
           $next = (int)$day;
@@ -816,13 +810,17 @@ function _office_hours_convert_to_ampm($time, $format = 'g:i a') {
 }
 
 /*
- * Helper function to convert to '08:00' to '0800'
+ * Helper function to convert '08:00' / '8:00' / '800' to '0800'
  */
 function _office_hours_time_to_mil($time) {
   if (is_null($time)) {
     return $time;
   }
-  return str_replace(':', '', $time);
+
+  $time = str_replace(':', '', $time);
+  $time = substr('0000' . $time, -4);
+
+  return $time;
 }
 
 /*
