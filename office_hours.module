@@ -123,6 +123,8 @@ function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, 
  */
 function office_hours_field_settings_form($field, $instance, $has_data) {
   $settings = $field['settings'];
+  $hours = _office_hours_show_ampm(date_hours('H', FALSE));
+
   $form = array();
   $form['#element_validate'] = array('_office_hours_field_settings_form_validate');
   $description = t('The maximum number of blocks, that are allowed per day.');
@@ -180,7 +182,6 @@ if (isset($settings['addhrs'])) {
     '#default_value' => $settings['valhrs'],
     '#description' => t('Assure that endhours are later then starthours. Please note that this will work as long as the opening hours are not through midnight.'),
   );
-  $hours = _office_hours_show_ampm(date_hours('H'), FALSE);
   $form['limitstart'] = array(
     '#type' => 'select',
     '#title' => t('Limit widget hours - start from'),
@@ -195,6 +196,21 @@ if (isset($settings['addhrs'])) {
     '#default_value' => $settings['limitend'],
     '#options' => $hours,
   );
+
+
+if (1 == 1) {
+  // Show $form['limitstart'] and $form['limitend'] using the normal widget.
+  // @Todo: activate this.
+  $form_state = NULL;
+  $langcode = 'nl';
+  $items = array();
+  $delta = 0;
+  $element = NULL;
+  $elements = office_hours_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
+  $form['limits'] = $elements[0];
+  $form['limits']['#dayname'] = 'Limit widget hours';
+  $form['limits']['#description'] = t('Restrict the hours available - select options will be between these hours.');
+}
 
   return $form;
 }
@@ -648,10 +664,7 @@ function office_hours_field_widget_info() {
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   // Get field settings, to make it accessible for each element in other functions.
-  $element['#field_settings'] = $field['settings'];
   $cardinality = $field['settings']['cardinality'];
-
-  // Build elements.
 
   //Get the day names, ordered to match the first day of the week, according to system settings.
   $days = date_week_days_ordered(date_week_days(TRUE));
@@ -660,8 +673,16 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
   //  @todo Issue: hook_field_load() is not called here, so we must do it ourselves.
   $items = _office_hours_arrange_field_items($items);
 
-  $elements = array();
+  // Get the valid minutes, using Date API.
+  $minutes = date_minutes('i', FALSE, $field['settings']['granularity']);
+  $minutes = drupal_map_assoc($minutes);
 
+  // Get the valid hours. Date API doesn't provide a straight method for this.
+  $hours = _office_hours_limit_hours($field['settings']);
+  $hours = drupal_map_assoc($hours); // key == value
+
+  // Build elements.
+  $elements = array();
   for ($day = 0; $day < 7; $day++) {
     // todo: theme_function clears values above cardinality. move it here.
     for ($daydelta = 0; $daydelta < max(2, $cardinality); $daydelta ++) {
@@ -670,13 +691,15 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
       $element['#day'] = $day;
       $element['#daydelta'] = $daydelta;
       $element['#dayname'] = $days[$day];
+      $element['#field_settings'] = $field['settings'];
+      $element['#field_settings']['#hours'] = $hours;
+      $element['#field_settings']['#minutes'] = $minutes;
 
       $elements[] = $element;
     }
   }
 
   // Build multi element widget.
-  $parents = $form['#parents'];
   $field_elements = array(
     '#theme' => 'office_hours_week',
     '#field_name' => $field['field_name'],
@@ -747,22 +770,55 @@ function _office_hours_show_ampm($hours) {
   foreach ($hours as $key => $hour) {
     if (!empty($hour)) {
       $hours[$key] = _office_hours_time_to_24hr($hour . '00')
-                   . ' ('
-                   . _office_hours_convert_to_ampm($hour . '00')
-                   . ')';
+                   . ' (' . _office_hours_convert_to_ampm($hour . '00') . ')';
+    }
+    else {
+//      $hours[$key] = '';
     }
   }
   return $hours;
 }
 
-function _office_hours_limit_hours($hours, $limitstart=0, $limitend=25) {
-  $limitedhours[] = '';
-  foreach ($hours as $key => $hour) {
-    if ($hour >= $limitstart && $hour <= $limitend) {
-      $limitedhours[$key] = $hour;
+/**
+ * Gets the (limited) hours of a day.
+ * Mimics date_hours() function, but that function does not support limiting the hours.
+ * The limits are set in the Widget settings form, and used in the Widget form.
+ */
+function _office_hours_limit_hours($settings) {
+
+  // Get the valid hours. Date API doesn't provide a straight method for this.
+  $format = ($settings['hoursformat'] == 1) ? 'g' : 'H';
+  $required = FALSE;
+  $start = ($settings['limitstart'] == '') ? 0 : max(0, $settings['limitstart']);
+  $end = ($settings['limitend'] == '') ? 23 : min(23, $settings['limitend']);
+
+  // begin modified copy from date_hours()
+  $hours = array();
+  if ($format == 'h' || $format == 'g') {
+    $min = 1;
+    $max = 24;
+    for ($i = $min; $i <= $max; $i++) {
+      if ((($i >= $start) && ($i <= $end)) || ($end - $start >= 11)) {
+        $hour = ($i <= 12) ? $i : $i - 12 ;
+        $hours[$hour] = $hour < 10 && ($format == 'H' || $format == 'h') ? "0$hour" : $hour;
+      }
+
+    }
+    $hours = array_unique($hours);
+  }
+  else {
+    $min = $start;
+    $max = $end;
+    for ($i = $min; $i <= $max; $i++) {
+      $hours[$i] = $i < 10 && ($format == 'H' || $format == 'h') ? "0$i" : $i;
     }
   }
-  return $limitedhours;
+
+  $none = array('' => '');
+  $hours =  !$required ? $none + $hours : $hours;
+  // end modified copy from date_hours()
+
+  return $hours;
 }
 
 /**

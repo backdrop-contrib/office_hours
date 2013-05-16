@@ -14,19 +14,49 @@
  * note that $element['#value'] is already set.
  */
 function _office_hours_block_process($element, &$form_state, $form) {
-  if ($element['#daydelta'] == 0) { // first cell, show dayname
-    $element['#prefix'] = '<div class="office-hours-block"><div class="dayname">' . t($element['#dayname']) . '</div>';
+  $element['#prefix'] = '';
+  if ($element['#daydelta'] == 0) {
+    // This is the first block, show the dayname.
+    $label = t($element['#dayname']);
+    $style = '';
+//    $element['#prefix'] .= '<div class="form-item office-hours-block-wrapper" '. $style . '>';
+    $element['#prefix'] .= '<div class="form-item office-hours-block" '. $style . '>';
   }
-  elseif ($element['#field_settings']['cardinality'] != 1) {  // second cell, we're supposed to show the 'add hours link'
-    $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link'))) . '<div class="office-hours-block" style = "display:none;">' . '<div class="dayname">' . t('and') . '</div>';
-    $element['#prefix'] = isset($element['#value']['starthours']) ? '<div class="office-hours-block">' . '<div class="dayname">' . t('and') . '</div>' : $link;
-  }
-  else { //this is the second cell and were not showing it- better clear it (in case a value was entered before).
-    $element['#prefix'] = "<div class='oh-hide'>";
+  elseif ($element['#field_settings']['cardinality'] == 1) {
+    // This is the second cell and we're not showing it- better clear it (in case a value was entered before).
+    $label = '';
+    $style = ' style = "display:none;"';
+
     $element['#value']['starthours'] = '';
     $element['#value']['endhours'] = '';
+    $element['#prefix'] = "<div class='oh-hide'>";
   }
-  $element['#suffix'] = '</div>';
+  elseif (isset($element['#value']['starthours'])) {
+    // This is a following block with contents, so we show the times.
+    $label = t('and');
+    $style = '';
+//    $element['#prefix'] .= '<div class="form-item office-hours-block-wrapper" '. $style . '>';
+    $element['#prefix'] .= '<div class="form-item office-hours-block" '. $style . '>';
+  }
+  else {
+    // This is an empty following block, so we show the 'add hours link'.
+    $label = t('and');
+    $style = 'style = "display:none;"';
+
+    $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link')));
+    $element['#prefix'] .= $link;
+//    $element['#prefix'] .= '<div class="form-item office-hours-block-wrapper" '. $style . '>';
+    $element['#prefix'] .= '<div class="form-item office-hours-block" '. $style . '>';
+  }
+  $element['#prefix'] .= '<label>' . $label . '</label>';
+  $element['#prefix'] .= '<div class="office-hours-block-hours">';
+
+  $element['#suffix'] = '';
+  $element['#suffix'] .= '</div>'; // from-until
+  $element['#suffix'] .= !empty($element['#description']) ? '<div class="description">' . $element['#description'] . '</div>' : '';
+  $element['#suffix'] .= '</div>'; // field_set-wrapper
+  $element['#suffix'] .= '</div>';
+
   $element['day'] = array(
     '#type' => 'value',
     '#value' => $element['#day'],
@@ -43,7 +73,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
   ); 
   $element['endhours'] = array(
     '#type' => 'office_hours_select',
-    '#prefix' => t('until'),
+    '#prefix' => ' ' . t('until'),
     '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
     '#field_settings' => $element['#field_settings'],
   );
@@ -64,20 +94,14 @@ function _office_hours_select_value_callback($element, $input = FALSE, &$form_st
  * Process the office_hours_select element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
-  $minutes = date_minutes('i', FALSE, $element['#field_settings']['granularity']);
-  $hours = ($element['#field_settings']['hoursformat'] == 1) ? date_hours('g') : date_hours('H');
-  if (!empty($element['#limitstart']) || !empty($element['#limitend']) ) {
-    $hours = _office_hours_limit_hours($hours, $element['#limitstart'], $element['#limitend']);
-  }
-
   $element['hours'] = array(
     '#type' => 'select',
-    '#options' => drupal_map_assoc($hours),
+    '#options' => $element['#field_settings']['#hours'],
     '#default_value' => $element['#value']['hour'],
   );
   $element['minutes'] = array(
     '#type' => 'select',
-    '#options' => drupal_map_assoc($minutes),
+    '#options' => $element['#field_settings']['#minutes'],
     '#default_value' => $element['#value']['minute'],
   );
   if ($element['#field_settings']['hoursformat'] == 1) {
