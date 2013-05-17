@@ -36,11 +36,30 @@ Using the customizable separators in the formatter settings, you can format the 
 - To export the data to a Google Places bulk upload file, you can create a view,
   and set the formatter to generate the following data (for a shop that opens from Monday to Friday): 
     2:10:00:18:00,3:10:00:18:00,4:10:00:18:00,5:10:00:18:00,6:10:00:18:00,7:12:00:20:00
-- To get only 1 day per row in a Views display: 
+
+== USING VIEWS - FIELDS ==
+Add the Field to any Views display, as you are used to do.
+- To show only 1 day per row in a Views display: 
   - add the field to your View,
   - open the MULTIPLE FIELD SETTINGS section,
   - UNcheck the option 'Display all values in the same row',
   - make also sure you display 'all' values. (only valid if you have upgraded from 1.1 version.)
+
+== USING VIEWS - FILTER CRITERIA ==
+Only default (out-of-the-box) Views functionality is provided.
+- To show only the entities that have a office hours: 
+  - add the filter criterion "Content: Office hours (field_office_hours:day)" to your View,
+  - set the filter option 'Operator' to 'is not empty',
+- To show only the entities that have office hours for e.g., Friday: 
+  - add the filter criterion "Content: Office hours (field_office_hours:day)" to your View,
+  - set the filter option 'Operator' to 'is equal to',
+  - set the filter option 'Value' to '5', or leave 'Value' empty and set 'Expose operator' to YES.
+- To show only the entities that are open NOW: 
+  This is not possible, yet. 
+
+== USING VIEWS - SORT CRITERIA ==
+Only default (out-of-the-box) Views functionality is provided.
+- To sort the times per day, add the 'day' sort criterion. 
 
 == IMPORTING WITH FEEDS MODULE ==
 To import data with the Feeds module, the following columns can be used:
