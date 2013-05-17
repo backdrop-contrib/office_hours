@@ -5,21 +5,22 @@ a restaurant or a user) to represent "office hours" or "opening hours".
 You MUST run update.php, when you upgrade from version 1.1 (or lower)
 to a -dev version or version 1.2 (when available).
 
-== FEATURES ==
-The Drupal 7 version now provdes the following features: 
-- For every instance, you can set default weekly office hours (multi-value).
+== GENERAL FEATURES ==
+The Drupal 7 version now provides the following features: 
 - Feeds module support to import data. (See below for details.)
 
 The widget provides:
+- default weekly office hours (multi-value, per field instance).
+- using 1, 2 or even more 'time blocks' per day (thanks to jonhattan).
 - 'allowed hours' restrictions;
 - input validation;
 - use of either a 24 or 12 hour clock;
-- using 1, 2 or even more 'time blocks' per day (thanks to jonhattan).
 
-The formatter provides:
-- an 'open now'/'closed now' indicator;
-- options to group days (E.g., "Mon-Fri 12:00-22:00").
-- options to display the 'office hours' any way you want. (See below for details.)
+The formatter provides o.a.:
+- a 'Current status' indicator ('open now'/'closed now');
+- options to show all/none/open/current days;
+- options to group days (E.g., "Mon-Fri 12:00-22:00");
+- customizable element separators to display the 'office hours' any way you want. (See below for details.)
 
 You can configure the formatter as follows:
 - Add the field to an entity/node;
@@ -60,6 +61,41 @@ Only default (out-of-the-box) Views functionality is provided.
 == USING VIEWS - SORT CRITERIA ==
 Only default (out-of-the-box) Views functionality is provided.
 - To sort the times per day, add the 'day' sort criterion. 
+
+== USING VIEWS - CREATE A BLOCK PER NODE/ENTITY ==
+Suppose you want to show the Office hours on a node page, but NOT on the page itself, 
+but rather in a separate block, follow these instructions:
+(If you use non-Node Content types/Entities, you'll need to adapt some settings.)
+1. First, create a new View for 'Content', and add a Block display;
+ - Under FORMAT, set to an Unformatted list of Fields;
+ - Under FIELDS, add the office_hours field and other fields you like;
+ - Under FILTER CRITERIA, add the relevant Content type(s);
+ - Under PAGER, show all items;
+ - Now open the ADVANCED section;
+ - Under CONTEXTUAL FILTERS, add 'Content: Nid';
+ -- Set 'Provide default value' to 'Content ID from URL';
+ -- Set 'Specify validation criteria' to the same Content type(s) as under FILTERS;
+ -- Set 'Filter value format' according to your wishes;
+ -- Set 'Action to take if filter value does not validate' to 'Hide View';
+ - Tweak the other settings as you like.
+
+2. Now, configure your new Block under /admin/structure/block/manage/ : 
+ - Set the Block title, and the Region settings;
+ - Under PAGES, set 'Show block on specific pages' to 'Only the listed pages' and 'node/*';
+   You might want to add more pages, if you use other non-node entity types.
+ - Tweak the other settings as you like.
+ You'll need to tune the block for the following cases: 
+ - A user accesses the node page, but 'Access denied';
+ - A node is unpublised;
+
+Now, test your node page. You'll see the Office hours in the page AND in the block. That's once too many.
+
+3. So, modify the 'View mode' of your Content type under /admin/structure/types/manage/<MY_CONTENT_TYPE>/display
+ - Select MANAGE DISPLAY;
+ - Select the View mode. (Perhaps you need to create an extra view mode for other purposes.)
+ - Select the Office_hours, and set the Format to 'Hidden';
+ - Save the data, end enjoy the result!
+
 
 == IMPORTING WITH FEEDS MODULE ==
 To import data with the Feeds module, the following columns can be used:
