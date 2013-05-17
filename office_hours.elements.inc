@@ -19,11 +19,11 @@ function _office_hours_block_process($element, &$form_state, $form) {
     // This is the first block, show the dayname.
     $label = t($element['#dayname']);
     $style = '';
-//    $element['#prefix'] .= '<div class="form-item office-hours-block-wrapper" '. $style . '>';
     $element['#prefix'] .= '<div class="form-item office-hours-block" '. $style . '>';
   }
   elseif ($element['#field_settings']['cardinality'] == 1) {
     // This is the second cell and we're not showing it- better clear it (in case a value was entered before).
+    // @todo: not used, since we check cardinality in widget_form. Keep this for later support of 'unlimited' (value -1).
     $label = '';
     $style = ' style = "display:none;"';
 
@@ -35,7 +35,6 @@ function _office_hours_block_process($element, &$form_state, $form) {
     // This is a following block with contents, so we show the times.
     $label = t('and');
     $style = '';
-//    $element['#prefix'] .= '<div class="form-item office-hours-block-wrapper" '. $style . '>';
     $element['#prefix'] .= '<div class="form-item office-hours-block" '. $style . '>';
   }
   else {
@@ -45,7 +44,6 @@ function _office_hours_block_process($element, &$form_state, $form) {
 
     $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link')));
     $element['#prefix'] .= $link;
-//    $element['#prefix'] .= '<div class="form-item office-hours-block-wrapper" '. $style . '>';
     $element['#prefix'] .= '<div class="form-item office-hours-block" '. $style . '>';
   }
   $element['#prefix'] .= '<label>' . $label . '</label>';
@@ -55,7 +53,6 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $element['#suffix'] .= '</div>'; // from-until
   $element['#suffix'] .= !empty($element['#description']) ? '<div class="description">' . $element['#description'] . '</div>' : '';
   $element['#suffix'] .= '</div>'; // field_set-wrapper
-  $element['#suffix'] .= '</div>';
 
   $element['day'] = array(
     '#type' => 'value',

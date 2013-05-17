@@ -197,19 +197,22 @@ if (isset($settings['addhrs'])) {
     '#options' => $hours,
   );
 
-
 if (1 == 0) {
-  // Show $form['limitstart'] and $form['limitend'] using the normal widget.
-  // @Todo: activate this.
+  // @Todo: activate this, to Show $form['limitstart'] and $form['limitend'] using the normal widget.
   $form_state = NULL;
-  $langcode = 'nl';
+  $default_value_field = $field;
+  $default_value_field['settings']['granularity'] = '60';
+  $langcode = 'und';
   $items = array();
   $delta = 0;
   $element = NULL;
-  $elements = office_hours_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
+  
+  $elements = office_hours_field_widget_form($form, $form_state, $default_value_field, $instance, $langcode, $items, $delta, $element);
+
   $form['limits'] = $elements[0];
   $form['limits']['#dayname'] = 'Limit widget hours';
   $form['limits']['#description'] = t('Restrict the hours available - select options will be between these hours.');
+  $form['limits']['#default_value'] = array('day' => 0, 'daydelta' => 0, 'starthours' => $settings['limitstart'] . '00', 'endhours' => $settings['limitend'] . '00');
 }
 
   return $form;
@@ -237,23 +240,15 @@ function office_hours_field_is_empty($item, $field) {
 }
 
 /**
- * Implements hook_field_presave().
- *
- * Convert day key to a backend value:
- *  - sunday as first day of week.
- *  - 14 days based value.
- *
- * NB. This hook is not called in the widget settings page. See http://drupal.org/node/1944678, 
- *     Luckily it works in both cases: in Node edit form AND in widget form.
+ * Implements hook_field_load(), hook_field_presave().
+ * NB. Do NOT use these hooks. On the field_settings_form, we have a multi-value default value.
+ * hook_field_load() and hook_field_presave() are NOT called on this page, destroying the data.
+ * This hook is not called in the widget settings page. See http://drupal.org/node/1944678 .
  */
-function office_hours_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  $first_day = variable_get('date_first_day', 0);
-  foreach ($items as $delta => $item) {
-    // 1. Convert day to sunday based.
-    $day = ($item['day'] + $first_day) % 7;
-    $items[$delta]['day'] = (int) $day;
-  }
-}
+//function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
+//}
+//function office_hours_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+//}
 
 /**
  * Implements hook_field_validate().
@@ -642,7 +637,6 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
   return $element;
 }
 
-
 /**
  * Implements hook_field_widget_info().
  */
@@ -661,17 +655,12 @@ function office_hours_field_widget_info() {
 
 /**
  * Implements hook_field_widget_form().
+ * Generates a set of time_block form-items.
+ * N.B. when changing this function, be aware that it is also used in office_hours_field_settings_form().
  */
 function office_hours_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   // Get field settings, to make it accessible for each element in other functions.
   $cardinality = $field['settings']['cardinality'];
-
-  //Get the day names, ordered to match the first day of the week, according to system settings.
-  $days = date_week_days_ordered(date_week_days(TRUE));
-
-  //  @todo convert the formatter to work with this representation for $items and move this call to hook_field_load().
-  //  @todo Issue: hook_field_load() is not called here, so we must do it ourselves.
-  $items = _office_hours_arrange_field_items($items);
 
   // Get the valid minutes, using Date API.
   $minutes = date_minutes('i', FALSE, $field['settings']['granularity']);
@@ -681,16 +670,29 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
   $hours = _office_hours_limit_hours($field['settings']);
   $hours = drupal_map_assoc($hours); // key == value
 
-  // Build elements.
+  //Get the day names, ordered to match the first day of the week, according to system settings.
+  $daynames = date_week_days(TRUE);
+  $first_day = variable_get('date_first_day', 0);
+
+  // Create an indexed two level array of time blocks. 
+  // First level are day numbers. Second level contains field values arranged by daydelta.
+  $indexed_days = array_fill_keys(array(0, 1, 2, 3, 4, 5, 6), array());
+  foreach ($items as $index => $item) {
+    $indexed_days[(int) $item['day']][] = $item;
+  }
+  $items = $indexed_days;
+
+  // Build elements, sorted by first_day_of_week.
   $elements = array();
-  for ($day = 0; $day < 7; $day++) {
+  $days = date_week_days_ordered(range(0, 6));
+  foreach ($days as $index => $day) {
     // todo: theme_function clears values above cardinality. move it here.
     for ($daydelta = 0; $daydelta < max(2, $cardinality); $daydelta ++) {
       $element['#type'] = 'office_hours_block';
       $element['#default_value'] = isset($items[$day][$daydelta]['starthours']) ? $items[$day][$daydelta] : NULL;
       $element['#day'] = $day;
       $element['#daydelta'] = $daydelta;
-      $element['#dayname'] = $days[$day];
+      $element['#dayname'] = $daynames[$day];
       $element['#field_settings'] = $field['settings'];
       $element['#field_settings']['#hours'] = $hours;
       $element['#field_settings']['#minutes'] = $minutes;
@@ -819,32 +821,6 @@ function _office_hours_limit_hours($settings) {
   // end modified copy from date_hours()
 
   return $hours;
-}
-
-/**
- * Arrange items indexed by day and daydelta.
- *
- * @param $items array of field values with 'day' key based on 14 possible
- *    values, 2 for each day (0,1 = Sunday; 2,3 = Monday; 4,5 = Tuesday ...)
- *
- * @return two level array. First level are day numbers, ordered in accordance
- *   with first day of week. Second level contains field values arranged by
- *   daydelta.
- */
-function _office_hours_arrange_field_items($items) {
-// @todo: remove day from items.
-  $values = array_fill_keys(array(0, 1, 2, 3, 4, 5, 6), array());
-  foreach ($items as $index => $item) {
-    $values[(int)$item['day']][] = $item;
-  }
-
-  // @todo: move this to theming, so we don't need hook_presave().
-  // @todo: test if changing the first_day_of_week works both on node_edit 
-  //        and default values on field_settings page.
-  // Reorder weekdays to match the first day of the week, using variable_get('date_first_day');
-  $values = date_week_days_ordered($values);
-
-  return $values;
 }
 
 /**
