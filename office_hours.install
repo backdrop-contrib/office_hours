@@ -59,5 +59,4 @@ function office_hours_field_schema($field) {
  */
 function office_hours_update_7100() {
   _office_hours_update_7100_daynum();
-  return "Updated 'day' column of Office hours fields.";
 }

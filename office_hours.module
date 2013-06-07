@@ -985,20 +985,25 @@ function _office_hours_update_7100_daynum() {
       if ($id > $latest_id) {
         $full_entities = array($id => $entity);
         field_attach_load($entity_type, $full_entities, FIELD_LOAD_CURRENT, array('field_id' => $field_id));
+        $empty = TRUE;
         foreach ($full_entities as $id => $full_entity) {
           $entity_field = &$full_entity->{$field_name};
           foreach ($entity_field as $langcode => &$items) {
             foreach ($items as $index => &$item) {
+              $empty = FALSE;
               $item['day'] = (int) ($item['day'] / 2);
             }
           }
         }
-        // Prevent core-error #985642, which should be fixed per D7.22
-        $full_entity->original = $full_entity;
+        // In order to avoid time-outs, only update objects with changed data.
+        if (!$empty) {
+          // Prevent core-error #985642, which should be fixed per D7.22
+          $full_entity->original = $full_entity;
 
-//        field_attach_presave($entity_type, $full_entity);  // this unnecesarily shifts the days.
-        field_attach_update($entity_type, $full_entity);
-        variable_set('office_hours-' . $entity_type . '-' . $bundle . '-' . $field_id , $id);
+//          field_attach_presave($entity_type, $full_entity);  // this unneccesarily shifts the days.
+          field_attach_update($entity_type, $full_entity);
+          variable_set('office_hours-' . $entity_type . '-' . $bundle . '-' . $field_id , $id);
+        }
       }
     }
   }
