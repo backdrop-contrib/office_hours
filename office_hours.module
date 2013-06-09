@@ -569,7 +569,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
       }
     }
   }
-  if ($next != NULL) {
+  if ($next !== NULL) {
     $days[(int)$next]['next'] = TRUE;
   }
 
