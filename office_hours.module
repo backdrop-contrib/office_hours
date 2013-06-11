@@ -42,7 +42,7 @@ function office_hours_field_info() {
   return array(
     'office_hours' => array(
       'label' => t('Office hours'),
-      'description' => t('Store office or opening hours in the database.'),
+      'description' => t("This field stores weekly 'office hours' or 'opening hours' in the database."),
       'settings' => array(
         'hoursformat' => 0,
         'granularity' => 60,
