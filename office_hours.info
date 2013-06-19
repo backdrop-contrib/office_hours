@@ -1,11 +1,7 @@
 name = Office hours
-description = Defines an office hours field for Fields API, allowing you to specify when a node is open or closed.
+description = Defines an 'weekly office hours' field type, allowing you to specify when an Entity is open or closed.
 package = Fields 
 dependencies[] = date_api
 core = 7.x
 
 stylesheets[all][] = office_hours.css
-
-; Views handlers
-; files[] = includes/office_hours_handler_filter_day.inc
-; files[] = includes/office_hours_handler_filter_hours.inc
