@@ -8,11 +8,18 @@
 /**
  * Theme function for field formatter.
  */
-function theme_office_hours_formatter_default($vars) {
+function theme_office_hours_field_formatter_default($vars) {
   $days = $vars['days'];
   $settings = $vars['settings'];
   $daynames = $vars['daynames'];
   $open = $vars['open'];
+
+  switch ($settings['hoursformat']) {
+    case 2: $timeformat = 'H:i';   break; // 24hr with leading zero
+    case 0: $timeformat = 'G:i';   break; // 24hr without leading zero
+    case 1: $timeformat = 'g:i a'; break; // 12hr ampm without leading zero
+  }
+
   $max_label_length = 3; // This is the minimum width for day labels. It is adjusted when adding new labels.
   $HTML_hours = '';
   $HTML_current_status = '';
@@ -34,7 +41,7 @@ function theme_office_hours_formatter_default($vars) {
                     'office_hours_time_range',
                     array(
                       'times'       => $block_times,
-                      'format'      => empty($settings['hoursformat']) ? 'G:i' : 'g:i a',
+                      'format'      => $timeformat,
                       'separator'   => $settings['separator_hours_hours'],
                     )
                   );

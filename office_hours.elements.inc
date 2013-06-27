@@ -84,7 +84,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
  */
 function _office_hours_select_value_callback($element, $input = FALSE, &$form_state) {
   // return array('hour' => $hour, 'minute' => $minute, 'ampm' => $ampm);
-  return _office_hours_time_parse($element['#default_value'], $element['#field_settings']['hoursformat']);
+  return _office_hours_field_widget_time_parse($element['#default_value'], $element['#field_settings']['hoursformat']);
 }
 
 /**
@@ -118,7 +118,7 @@ function _office_hours_select_process($element, &$form_state, $form) {
 function _office_hours_select_validate($element, &$form_state) {
   $hours = $element['hours']['#value'];
   $minutes = ($element['minutes']['#value'] == 0) ? '00' : $element['minutes']['#value'];
-  if ($element['#field_settings']['hoursformat'] == 1) {
+  if ($element['#field_settings']['hoursformat'] == 1) { // 12 hrs format
     if ($element['ampm']['#value'] == 'pm' && $hours < 12) $hours += 12;
     if ($element['ampm']['#value'] == 'am' && $hours == 12) $hours = '00';
   }

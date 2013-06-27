@@ -20,7 +20,7 @@ function office_hours_theme($existing, $type, $theme, $path) {
   );
   $themes = array(
     // Formatter theming functions.
-    'office_hours_formatter_default' => $base + array('render element' => 'element'),
+    'office_hours_field_formatter_default' => $base + array('render element' => 'element'),
     'office_hours_time_range' => $base + array('render element' => 'element'),
     // Widget theming functions.
     'office_hours_week' => $base + array('render element' => 'element'),
@@ -162,10 +162,13 @@ if (isset($settings['addhrs'])) {
   $form['hoursformat'] = array(
     '#type' => 'select',
     '#title' => t('Hours format'),
-    '#options' => array(0 => t('24 hrs'), 1 => t('12 hrs')),
+    '#options' => array( 2 => t('24 hrs') . ' (09:00)',
+                         0 => t('24 hrs') . ' (9:00)',
+                         1 => t('12 hrs') . ' (9:00 am)',
+                       ),
     '#default_value' => $settings['hoursformat'],
     '#required' => FALSE,
-    '#description' => t('Format of the clock.'),
+    '#description' => t('Format of the clock in the widget.'),
   );
   $form['granularity'] = array(
     '#type' => 'select',
@@ -340,9 +343,13 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   $form['hoursformat'] = array(
     '#type' => 'select',
     '#title' => t('Hours format'),
-    '#options' => array(0 => t('24 hrs'), 1 => t('12 hrs')),
+    '#options' => array( 2 => t('24 hrs') . ' (09:00)',
+                         0 => t('24 hrs') . ' (9:00)',
+                         1 => t('12 hrs') . ' (9:00 am)',
+                       ),
     '#default_value' => $settings['hoursformat'],
     '#required' => FALSE,
+    '#description' => t('Format of the clock in the formatter.'),
   );
   $form['compress'] = array(
     '#title' => t('Compress all hours of a day into one set'),
@@ -621,7 +628,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
   // Theme the result
   $element[] = array(
     '#markup' => theme(
-      $field['type'] . '_formatter_default',
+      'office_hours_field_formatter_default',
       array(
         'element'  => $items,
         'display'  => $display,
@@ -667,7 +674,7 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
   $minutes = drupal_map_assoc($minutes);
 
   // Get the valid hours. Date API doesn't provide a straight method for this.
-  $hours = _office_hours_limit_hours($field['settings']);
+  $hours = _office_hours_field_widget_hours($field['settings']);
   $hours = drupal_map_assoc($hours); // key == value
 
   //Get the day names, ordered to match the first day of the week, according to system settings.
@@ -786,23 +793,23 @@ function _office_hours_show_ampm($hours) {
  * Mimics date_hours() function, but that function does not support limiting the hours.
  * The limits are set in the Widget settings form, and used in the Widget form.
  */
-function _office_hours_limit_hours($settings) {
+function _office_hours_field_widget_hours($settings) {
 
   // Get the valid hours. Date API doesn't provide a straight method for this.
-  $format = ($settings['hoursformat'] == 1) ? 'g' : 'H';
+  $hoursformat = ($settings['hoursformat'] == 1) ? 'g' : 'H'; // 12 or 24 format
   $required = FALSE;
   $start = ($settings['limitstart'] == '') ? 0 : max(0, $settings['limitstart']);
   $end = ($settings['limitend'] == '') ? 23 : min(23, $settings['limitend']);
 
   // begin modified copy from date_hours()
   $hours = array();
-  if ($format == 'h' || $format == 'g') {
+  if ($hoursformat == 'h' || $hoursformat == 'g') { // 12-hour format
     $min = 1;
     $max = 24;
     for ($i = $min; $i <= $max; $i++) {
       if ((($i >= $start) && ($i <= $end)) || ($end - $start >= 11)) {
         $hour = ($i <= 12) ? $i : $i - 12 ;
-        $hours[$hour] = $hour < 10 && ($format == 'H' || $format == 'h') ? "0$hour" : $hour;
+        $hours[$hour] = $hour < 10 && ($hoursformat == 'H' || $hoursformat == 'h') ? "0$hour" : $hour;
       }
 
     }
@@ -812,7 +819,8 @@ function _office_hours_limit_hours($settings) {
     $min = $start;
     $max = $end;
     for ($i = $min; $i <= $max; $i++) {
-      $hours[$i] = $i < 10 && ($format == 'H' || $format == 'h') ? "0$i" : $i;
+      $hour = $i;
+      $hours[$hour] = $hour < 10 && ($hoursformat == 'H' || $hoursformat == 'h') ? "0$hour" : $hour;
     }
   }
 
@@ -827,17 +835,17 @@ function _office_hours_limit_hours($settings) {
  * Helper function to convert a time to a given format.
  * For formatting options, see http://www.php.net/manual/en/function.date.php
  */
-function _office_hours_time_format($time, $format) {
+function _office_hours_time_format($time, $timeformat) {
   $date = new DateTime(_office_hours_time_to_24hr($time));
-  return $date->format($format);
+  return $date->format($timeformat);
 }
 
 /**
  * Helper function to convert '1630' or '16:30' to '4:30 pm'.
  * For formatting options, see http://www.php.net/manual/en/function.date.php
  */
-function _office_hours_convert_to_ampm($time, $format = 'g:i a') {
-  return _office_hours_time_format($time, $format);
+function _office_hours_convert_to_ampm($time, $timeformat = 'g:i a') {
+  return _office_hours_time_format($time, $timeformat);
 }
 
 /*
@@ -872,19 +880,19 @@ function _office_hours_time_to_24hr($time = '') {
 /*
  * Helper function to convert a time to its 3 elements: hour, minute, ampm.
  * Mimics the date_parse() function.
+ *   g = 12-hour format of an hour without leading zeros 1 through 12
+ *   G = 24-hour format of an hour without leading zeros 0 through 23
+ *   h = 12-hour format of an hour with leading zeros    01 through 12
+ *   H = 24-hour format of an hour with leading zeros    00 through 23
  */
-function _office_hours_time_parse($time, $format) {
+function _office_hours_field_widget_time_parse($time, $hoursformat) {
   $hour = '';
   $min = '';
   $ampm = 'am';
 
   if (is_numeric($time)) {
-    if ($format == 1) {  // ampm
-      $time = _office_hours_time_format($time, 'g:i:a');
-    }
-    else { // 24hr
-      $time = _office_hours_time_format($time, 'H:i:a');
-    }
+    $timeformat = ($hoursformat == 1) ? 'g:i:a' : 'H:i:a'; // 12hrs or 24hrs
+    $time = _office_hours_time_format($time, $timeformat);
     list($hour, $min, $ampm) = explode(':', $time);
   }
 
