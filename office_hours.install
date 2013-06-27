@@ -122,8 +122,21 @@ function _office_hours_update_7100_daynum() {
     // Convert the 'day' column to from 0-13 to 0-6 day range.
     foreach ($entities as $id => $entity) {
       if ($id > $latest_id) {
+
+        // Entity types other then 'node' (like 'taxonomy_term') need to be enhanced.
+        // The following is copied from entity_create_stub_entity(), which is removed in D8.
+        $info = entity_get_info($entity_type);
+//        $entity->{$info['entity keys']['id']} = $entity->id;
+        if (!empty($info['entity keys']['revision']) && isset($entity->vid)) {
+          $entity->{$info['entity keys']['revision']} = $entity->vid;
+        }
+        if (!empty($info['entity keys']['bundle']) && isset($bundle)) {
+          $entity->{$info['entity keys']['bundle']} = $bundle;
+        }
+
         $full_entities = array($id => $entity);
         field_attach_load($entity_type, $full_entities, FIELD_LOAD_CURRENT, array('field_id' => $field_id));
+
         $empty = TRUE;
         foreach ($full_entities as $id => $full_entity) {
           $entity_field = &$full_entity->{$field_name};
