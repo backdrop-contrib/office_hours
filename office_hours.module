@@ -184,7 +184,7 @@ if (isset($settings['addhrs'])) {
   );
   $form['limitstart'] = array(
     '#type' => 'select',
-    '#title' => t('Limit widget hours - start from'),
+    '#title' => t('Limit widget hours - from'),
     '#description' => t('Restrict the hours available - select options will start from this hour.'),
     '#default_value' => $settings['limitstart'],
     '#options' => $hours,
@@ -345,7 +345,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#required' => FALSE,
   );
   $form['compress'] = array(
-    '#title' => t('Compress Hours + More hours into one set'),
+    '#title' => t('Compress all hours of a day into one set'),
     '#type' => 'checkbox',
     '#default_value' => $settings['compress'],
     '#description' => t('Even if more hours is allowed, you might want to show a compressed form. E.g.,  7:00-12:00, 13:30-19:00 becomes 7:00-19:00.'),
