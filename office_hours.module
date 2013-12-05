@@ -551,12 +551,21 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
         $next = (int)$day;
       }
     }
+
+    if ($day - $today == -1 || ($day - $today == 6)) {
+      // We were open yesterday evening, check if we are still open.
+      if ($start >= $end && $end >= $now) {
+        $open = TRUE;
+        $days[$day]['current'] = TRUE;
+        $next = (int)$day;
+      }
+    }
     elseif ($day == $today) {
       if ($start <= $now) {
-        // we were open today, check if we are still open.
-        if ( ($start > $end)    // we are open until after midnight.
-            || ($start == $end) // we are open 24hrs per day.
-            || (($start < $end) && ($end > $now))) { // we have closed already.
+        // We were open today, check if we are still open.
+        if ( ($start > $end)    // We are open until after midnight.
+            || ($start == $end) // We are open 24hrs per day.
+            || (($start < $end) && ($end > $now))) { // We have closed already.
           $open = TRUE;
           $days[$day]['current'] = TRUE;
           $next = (int)$day;
@@ -566,7 +575,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
         }
       }
       else {
-        // we will open later today.
+        // We will open later today.
           $next = (int)$day;
       }
     }
