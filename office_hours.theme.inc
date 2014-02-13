@@ -14,9 +14,19 @@ function theme_office_hours_field_formatter_default($vars) {
   $open = $vars['open'];
 
   switch ($settings['hoursformat']) {
-    case 2: $timeformat = 'H:i';   break; // 24hr with leading zero
-    case 0: $timeformat = 'G:i';   break; // 24hr without leading zero
-    case 1: $timeformat = 'g:i a'; break; // 12hr ampm without leading zero
+    case 2:
+      // 24hr with leading zero.
+      $timeformat = 'H:i';
+      break;
+    case 0:
+      // 24hr without leading zero.
+      $timeformat = 'G:i';
+      break;
+
+    case 1: 
+      // 12hr ampm without leading zero.
+      $timeformat = 'g:i a';
+      break;
   }
 
   // Minimum width for day labels. Adjusted when adding new labels.
@@ -120,7 +130,7 @@ function theme_office_hours_field_formatter_default($vars) {
 }
 
 /**
- * Theme function for formatter: time ranges
+ * Theme function for formatter: time ranges.
  */
 function theme_office_hours_time_range($vars = array()) {
   // Add default values to $vars if not set already.
@@ -174,12 +184,21 @@ function theme_office_hours_week($variables) {
   $rows = array();
   foreach (element_children($element) as $key) {
     $rows[] = array(
-      drupal_render($element[$key])
+      drupal_render($element[$key]),
     );
   }
 
   $output = '<div class="form-item">';
-  $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => $table_id, 'class' => array('field-multiple-table'))));
+  $output .= theme('table',
+                   array(
+                     'header' => $header,
+                     'rows' => $rows,
+                     'attributes' => array(
+                       'id' => $table_id, 
+                       'class' => array('field-multiple-table')
+                     )
+                   )
+                 );
   $output .= $element['#description'] ? '<div class="description">' . $element['#description'] . '</div>' : '';
   $output .= '</div>';
 
