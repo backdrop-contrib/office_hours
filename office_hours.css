@@ -18,8 +18,8 @@
   font-style: italic;
 }
 
-/* Time blocks in hook_field_widget_form(), 
- * and in hook_field_settings_form() 
+/* Time blocks in hook_field_widget_form()
+ * and in hook_field_settings_form().
  */
 div.office-hours-block {
   display: inline;
@@ -48,6 +48,6 @@ td div.office-hours-block label {
   font-weight: bold;
 }
 
-.office-hours-block .form-item label { 
-  font-weight: normal; 
+.office-hours-block .form-item label {
+  font-weight: normal;
 }

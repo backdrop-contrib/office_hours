@@ -4,13 +4,14 @@
  * Implements Views integration: hours filter
  */
 
+/**
+ * Adds a date handler to the filter.
+ */
 class office_hours_handler_filter_hours extends views_handler_filter_numeric {
 
-  // Add a date handler to the filter.
-  function construct() {
-    parent::construct();
-  }
-  var $no_single = TRUE;/*
+  $no_single = TRUE;
+
+/*
   function option_definition() {
     $options = parent::option_definition();
 
@@ -24,8 +25,10 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
 
     return $options;
   }
+ */
 
-  /* function operators() {
+/*
+  function operators() {
     $operators = array(
       '<' => array(
         'title' => t('Is less than'),
@@ -80,10 +83,11 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
   }
  */
 
-/**
- * Provide a list of all the numeric operators
- */
-/* function operator_options($which = 'title') {
+  /**
+   * Provides a list of all the numeric operators.
+   */
+/*
+  function operator_options($which = 'title') {
     $options = array();
     foreach ($this->operators() as $id => $info) {
       $options[$id] = $info[$which];
@@ -104,10 +108,10 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
   }
  */
 
-/**
-  * Provide the form
-  */
-function value_form(&$form, &$form_state) {
+  /**
+   * Provides the form.
+   */
+  function value_form(&$form, &$form_state) {
     $form['value']['#tree'] = TRUE;
     $opt = _create_hours_arr($field, FALSE);
     // We have to make some choices when creating this as an exposed
@@ -135,7 +139,7 @@ function value_form(&$form, &$form_state) {
       $form['value']['value'] = array(
         '#type' => 'select',
         '#title' => empty($form_state['exposed']) ? t('Choose hour') : '',
-        //'#prefix' => t('<div class="form-item"><label>Filter by hours</label><p>Choose the hour to filter by working hours (\'between\') or closed hours(\'not between\')</p></div>'),
+        // '#prefix' => t('<div class="form-item"><label>Filter by hours</label><p>Choose the hour to filter by working hours (\'between\') or closed hours(\'not between\')</p></div>'),
         '#default_value' => $this->value['value'],
         '#options' => $opt,
         '#process' => array('views_process_dependency'),
@@ -167,7 +171,7 @@ function value_form(&$form, &$form_state) {
         '#options' => $opt,
       );
       $form['value']['max'] = array(
-         '#type' => 'select',
+        '#type' => 'select',
         '#title' => empty($form_state['exposed']) ? t('Choose hour') : '',
         '#default_value' => $this->value['max'],
         '#options' => $opt,
@@ -188,5 +192,4 @@ function value_form(&$form, &$form_state) {
       }
     }
   }
-
 }

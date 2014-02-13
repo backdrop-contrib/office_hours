@@ -140,7 +140,8 @@ function _office_hours_views_field_views_data($field) {
         'allow empty' => TRUE,
       );
     }
-    // TODO: provide automatic filters, sorts, and arguments for each column, not just the first?
+    // @todo: provide automatic filters, sorts, and arguments
+    // for each column, not just the first?
     return array($table_alias => $data);
 }
  */
