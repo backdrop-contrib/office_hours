@@ -105,11 +105,11 @@ function office_hours_feeds_set_target($source, $entity, $target, $feed_element)
       // @todo: test for collaboration with Feeds Tamper.
       // @todo: support other first day of week.
       if (is_numeric($feed_element)) {
-        // day is passed as day number: sunday: 1->0; monday: 2->1; tuesday: 3->2; etc.
+        // Day is passed as day number: sunday: 1->0; monday: 2->1; tuesday: 3->2; etc.
         $sv_day = ($feed_element - 1);
       }
       else {
-        // day is passed as text
+        // Day is passed as text.
         switch (strtolower(substr($feed_element, 0, 3))) {
           case 'sun': // en
           case 'zon': // nl
@@ -160,15 +160,14 @@ function office_hours_feeds_set_target($source, $entity, $target, $feed_element)
       // Since we have unlimited bocks per day, there is no difference between
       // 'morehours' and 'hours'.
       // break;  // do not break, proceed with 'hours'
-
     case 'hours':
       // Open a new hours_block element.
       // Remove time delimiters & spaces: ' 10:00 - 18:00  ' --> '1000-1800'
       // The following is not sufficient to strip all unvisible characters,
       // therefor intval() is used later on.
-      $feed_element = str_replace(' ' , '', $feed_element);
-      $feed_element = str_replace(':' , '', $feed_element);
-      $feed_element = str_replace('.' , '', $feed_element);
+      $feed_element = str_replace(' ', '', $feed_element);
+      $feed_element = str_replace(':', '', $feed_element);
+      $feed_element = str_replace('.', '', $feed_element);
 
       // Add the hours_block to the field.
       switch ($start_end_field) {

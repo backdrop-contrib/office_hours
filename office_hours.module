@@ -172,7 +172,7 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
       '30' => t('half hours'),
       '15' => t('quarter hours'),
       '5' => t('5 minute intervals'),
-      '1' => t('minutes')
+      '1' => t('minutes'),
     ),
     '#default_value' => $settings['granularity'],
     '#required' => FALSE,
@@ -254,10 +254,10 @@ function office_hours_field_is_empty($item, $field) {
  * hook_field_load() and hook_field_presave() are NOT called on this page, destroying the data.
  * This hook is not called in the widget settings page. See http://drupal.org/node/1944678 .
  */
-//function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
-//}
-//function office_hours_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
-//}
+// function office_hours_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
+// }
+// function office_hours_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+// }
 
 /**
  * Implements hook_field_validate().
@@ -265,8 +265,8 @@ function office_hours_field_is_empty($item, $field) {
  *
  * Is not implemented: the validation is done in the element callback: office_hours_validate().
  */
-//function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
-//}
+// function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+// }
 
 /**
  * Implements hook_field_formatter_info().
@@ -424,7 +424,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
     '#description' => t('This separator will be placed between the hours and more_hours of a day.'),
   );
 
-  // Show a 'Current status' option
+  // Show a 'Current status' option.
   $form['current_status'] = array(
     '#title' => t('Current status'),
     '#type' => 'fieldset',
@@ -542,11 +542,13 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     );
   }
 
-  $timezone = NULL; // @TODO.
+ // @TODO: support timezones.
+  $timezone = NULL;
 
-  // Avoid repetitive calculations, use static. See http://drupal.org/node/1969956
+  // Avoid repetitive calculations, use static.
+  // See http://drupal.org/node/1969956.
   // And even better, avoid the expensive DateObject.
-  $today = (int)idate('w', $_SERVER['REQUEST_TIME']); // Get daynumber sun=0 - sat=6.
+  $today = (int) idate('w', $_SERVER['REQUEST_TIME']); // Get daynumber sun=0 - sat=6.
   $now = date('Gi', $_SERVER['REQUEST_TIME']); // 'Gi' format.
 
   $open = FALSE;
@@ -589,7 +591,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     elseif ($day == $today) {
       if ($start <= $now) {
         // We were open today, check if we are still open.
-        if ( ($start > $end)    // We are open until after midnight.
+        if (($start > $end)    // We are open until after midnight.
             || ($start == $end) // We are open 24hrs per day.
             || (($start < $end) && ($end > $now))) {// We have closed already.
           $open = TRUE;
@@ -711,7 +713,7 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
 
   // Get the valid hours. Date API doesn't provide a straight method for this.
   $hours = _office_hours_field_widget_hours($field['settings']);
-  $hours = drupal_map_assoc($hours); // key == value
+  $hours = drupal_map_assoc($hours); // $key == $value.
 
   // Get the day names, ordered to match the first day of the week,
   // according to system settings.
@@ -784,7 +786,7 @@ function office_hours_element_info() {
         // ),
         'js' => array(
           drupal_get_path('module', 'office_hours') . '/office_hours.js',
-          ),
+        ),
       ),
       // '#pre_render' => array('_office_hours_pre_render_element'),
     ),
@@ -831,9 +833,8 @@ function _office_hours_show_ampm($hours) {
  * Widget form.
  */
 function _office_hours_field_widget_hours($settings) {
-
   // Get the valid hours. Date API doesn't provide a straight method for this.
-  $hoursformat = ($settings['hoursformat'] == 1) ? 'g' : 'H'; // 12 or 24 format
+  $hoursformat = ($settings['hoursformat'] == 1) ? 'g' : 'H'; // 12 or 24 format.
   $required = FALSE;
   $start = ($settings['limitstart'] == '') ? 0 : max(0, $settings['limitstart']);
   $end = ($settings['limitend'] == '') ? 23 : min(23, $settings['limitend']);

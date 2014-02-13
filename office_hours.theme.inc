@@ -18,6 +18,7 @@ function theme_office_hours_field_formatter_default($vars) {
       // 24hr with leading zero.
       $timeformat = 'H:i';
       break;
+
     case 0:
       // 24hr without leading zero.
       $timeformat = 'G:i';
@@ -194,9 +195,9 @@ function theme_office_hours_week($variables) {
                      'header' => $header,
                      'rows' => $rows,
                      'attributes' => array(
-                       'id' => $table_id, 
-                       'class' => array('field-multiple-table')
-                     )
+                       'id' => $table_id,
+                       'class' => array('field-multiple-table'),
+                     ),
                    )
                  );
   $output .= $element['#description'] ? '<div class="description">' . $element['#description'] . '</div>' : '';
