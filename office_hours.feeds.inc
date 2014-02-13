@@ -1,11 +1,8 @@
 <?php
-
 /**
  * @file
- * Implementation of Feeds mapping API for office_hours
+ * Implementation of Feeds mapping API for office_hours.
  */
-
-define( 'MOREHOURS', '1'); // index to differentiate hours vs. morehours
 
 /**
  * Implements hook_feeds_processor_targets_alter().
@@ -76,43 +73,40 @@ function office_hours_feeds_processor_targets_alter(&$targets, $entity_type, $bu
  */
 function office_hours_feeds_set_target($source, $entity, $target, $feed_element) {
   static $sv_vid = NULL; // remember current entity-id
-  static $sv_day = 0; // remember current day
-  static $sv_office_hours = NULL; // collect OH while building
   static $sv_field_name = NULL; // remember name of field that is set in target.
-  static $sv_index = NULL; // index of array
+  static $sv_day = 0; // remember current day
 
   if (is_array($feed_element)) {
     $feed_element = $feed_element[0];
   }
 
-//  list($field_name, $sub_field, $start_end_field) = explode(':', $target, 3);
+  // list($field_name, $sub_field, $start_end_field) = explode(':', $target, 3);
   $field = explode(':', $target, 3);
   $field_name      = isset($field[0]) ? $field[0] : '' ;
   $sub_field       = isset($field[1]) ? $field[1] : '' ;
   $start_end_field = isset($field[2]) ? $field[2] : '' ;
 
-  $morehours = 0; // for hours / morehours
-
   switch ($sub_field) {
     case 'day':
-      // each OfficeHours-feeds line MUST start with a day-field; set new line
-        if ($entity->vid != $sv_vid || $field_name != $sv_field_name) {
-          // This is a new entity, or another field within the same entity.
-          $sv_vid = $entity->vid;
-          $sv_field_name = $field_name;
-          unset($entity->{$field_name});  // clear officeHours field - this should have been done before.
-          $sv_index = 0;
-        }
-        else {
-          // this is a new line in an existing entity
-          $sv_index++;
-        }
+      // each OfficeHours-feeds line MUST have a day-column BEFORE any hours-columns;
+      // Set new hours element in {field_name}.
+      if ($entity->vid != $sv_vid || $field_name != $sv_field_name) {
+        // This is a new entity, or another field within the same entity.
+        $sv_vid = $entity->vid;
+        $sv_field_name = $field_name;
+
+        $entity->{$field_name}[$entity->language] = array();  // clear Office Hours field - this should have been done before.
+      }
 
       // convert day to day number
       // @todo: better way to process texts, perhaps only first 3 characters
       // @todo: test for collaboration with Feeds Tamper
       // @todo: support other first day of week
-      if (!is_numeric($feed_element)) {
+      if (is_numeric($feed_element)) {
+        // day is passed as day number: sunday: 1->0; monday: 2->1; tuesday: 3->2; etc.
+        $sv_day = ( $feed_element - 1 );
+      }
+      else {
         // day is passed as text
         switch (strtolower(substr($feed_element, 0, 3))) {
           case 'sun': //en
@@ -152,46 +146,43 @@ function office_hours_feeds_set_target($source, $entity, $target, $feed_element)
             break;
         }
       }
-      else {
-        // day is passed as day number: sunday: 1->0; monday: 2->1; tuesday: 3->2; etc.
-        $sv_day = ( $feed_element - 1 );
-      }
       break;
 
     case 'morehours':
-      // set warning if Morehours is processed, but Hours is not set yet.
-      if (!isset($entity->{$field_name}[$entity->language][$sv_index])) {
-        watchdog('feeds office_hours', 'only morehours is set, not hours for nid = %nid', array( '%nid' => $entity->vid));
-      }
-      $sv_index++;  // open a new line for the 'morehours'
-      $morehours = MOREHOURS;
+      // Since we have unlimited bocks per day, there is no difference between
+      // 'morehours' and 'hours'.
       //break;  // do not break, proceed with 'hours'
 
     case 'hours':
-      //$morehours = 0;  // already set
-      // remove time delimiters & spaces: ' 10:00 - 18:00  ' --> '1000-1800'
-      // the following is not sufficient to strip all unvisible characters, therefor intval() is used later on
+      // Open a new hours_block element.
+      // Remove time delimiters & spaces: ' 10:00 - 18:00  ' --> '1000-1800'
+      // The following is not sufficient to strip all unvisible characters, therefor intval() is used later on
       $feed_element = str_replace( ' ' , '' , $feed_element);
       $feed_element = str_replace( ':' , '' , $feed_element);
       $feed_element = str_replace( '.' , '' , $feed_element);
+
+      // Add the hours_block to the field.
       switch ($start_end_field) {
         case 'start':
-            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day;
-            $entity->{$field_name}[$entity->language][$sv_index]['starthours'] = intval($feed_element);
+            $hours_block['day'] = $sv_day;
+            $hours_block['starthours'] = intval($feed_element);
           break;
         case 'end':
-            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day;
-            $entity->{$field_name}[$entity->language][$sv_index]['endhours'] = intval($feed_element);
+            $hours_block['day'] = $sv_day;
+            $hours_block['endhours'] = intval($feed_element);
           break;
         default:
             // $feed_element contains both Start and End.
             list($hours_start, $hours_end) = explode('-', $feed_element, 2);
-            $entity->{$field_name}[$entity->language][$sv_index]['day'] = $sv_day;
-            $entity->{$field_name}[$entity->language][$sv_index]['starthours'] = intval($hours_start);
-            $entity->{$field_name}[$entity->language][$sv_index]['endhours'] = intval($hours_end);
+            $hours_block['day'] = $sv_day;
+            $hours_block['starthours'] = intval($hours_start);
+            $hours_block['endhours'] = intval($hours_end);
           break;
       }
+      $entity->{$field_name}[$entity->language][] = $hours_block;
+
       break;
+
     default:
       watchdog('feeds office_hours', 'field %field element %element is not correct', array( '%field' => '$sub_field', '%element' => $feed_element));
       break;
