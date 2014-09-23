@@ -575,7 +575,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     if ($day < $today) {
       // Initialize to first day of (next) week, in case we're closed
       // the rest of the week.
-      if ($next == NULL) {
+      if ($next === NULL) {
         $next = (int) $day;
       }
     }
@@ -608,7 +608,7 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
       }
     }
     elseif ($day > $today) {
-      if ($next == NULL || $next < $today) {
+      if ($next === NULL || $next < $today) {
         $next = (int) $day;
       }
     }
