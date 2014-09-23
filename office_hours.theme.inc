@@ -106,10 +106,10 @@ function theme_office_hours_field_formatter_default($vars) {
 
   // Generate HTML for CurrentStatus.
   if ($open) {
-    $html_current_status = '<span class="oh-current-open">' . t($settings['current_status']['open_text']) . '</span>';
+    $html_current_status = '<div class="oh-current-open">' . t($settings['current_status']['open_text']) . '</div>';
   }
   else {
-    $html_current_status = '<span class="oh-current-closed">' . t($settings['current_status']['closed_text']) . '</span>';
+    $html_current_status = '<div class="oh-current-closed">' . t($settings['current_status']['closed_text']) . '</div>';
   }
 
   switch ($settings['current_status']['position']) {
