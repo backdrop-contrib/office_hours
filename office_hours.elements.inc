@@ -18,35 +18,42 @@ function _office_hours_block_process($element, &$form_state, $form) {
   if ($element['#daydelta'] == 0) {
     // This is the first block, show the dayname.
     $label = t($element['#dayname']);
-    $style = '';
-    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $style . '>';
+    $label_style = '';
+    $block_style = '';
+
+    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
   elseif ($element['#field_settings']['cardinality'] == 1) {
     // This is the second cell and we're not showing it- better clear it (in case a value was entered before).
     // @todo: not used, since we check cardinality in widget_form. Keep this for later support of 'unlimited' (value -1).
     $label = '';
-    $style = ' style = "display:none;"';
+    $label_style = '';
+    $block_style = ' style = "display:none;"';
 
     $element['#value']['starthours'] = '';
     $element['#value']['endhours'] = '';
     $element['#prefix'] = "<div class='oh-hide'>";
   }
-    elseif (!empty($element['#value']['starthours']['hours'])) {
+  elseif (!empty($element['#value']['starthours'])) {
     // This is a following block with contents, so we show the times.
     $label = t('and');
-    $style = '';
-    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $style . '>';
+    $label_style = 'style = "text-align:right;"';
+    $block_style = '';
+
+    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
   else {
     // This is an empty following block, so we show the 'add hours link'.
     $label = t('and');
-    $style = 'style = "display:none;"';
+    $label_style = 'style = "text-align:right;"';
+    $block_style = 'style = "display:none;"';
 
     $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link')));
     $element['#prefix'] .= $link;
-    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $style . '>';
+    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
-  $element['#prefix'] .= '<label>' . $label . '</label>';
+  $element['#prefix'] .= '<label '. $label_style. '>' . $label . '</label>';
+
   $element['#prefix'] .= '<div class="office-hours-block-hours">';
 
   $element['#suffix'] = '';

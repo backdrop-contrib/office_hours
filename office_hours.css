@@ -46,6 +46,7 @@ td div.office-hours-block label {
   display: -moz-inline-box;
   display: inline-block;
   font-weight: bold;
+  padding: 0 1em 0 0;
 }
 
 .office-hours-block .form-item label {

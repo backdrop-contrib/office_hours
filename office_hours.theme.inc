@@ -182,6 +182,7 @@ function theme_office_hours_week($variables) {
       'class' => array('field-label'),
     ),
   );
+
   $rows = array();
   foreach (element_children($element) as $key) {
     $rows[] = array(
