@@ -58,7 +58,6 @@ function _office_hours_block_process($element, &$form_state, $form) {
 
   $element['#suffix'] = '';
   $element['#suffix'] .= '</div>'; // From-until.
-  $element['#suffix'] .= !empty($element['#description']) ? '<div class="description">' . $element['#description'] . '</div>' : '';
   $element['#suffix'] .= '</div>'; // Field_set-wrapper.
 
   $element['day'] = array(
