@@ -31,7 +31,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
     $element['#value']['endhours'] = '';
     $element['#prefix'] = "<div class='oh-hide'>";
   }
-  elseif (isset($element['#value']['starthours'])) {
+    elseif (!empty($element['#value']['starthours']['hours'])) {
     // This is a following block with contents, so we show the times.
     $label = t('and');
     $style = '';
