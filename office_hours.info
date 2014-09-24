@@ -1,5 +1,5 @@
 name = Office hours
-description = Defines an 'weekly office hours' field type, allowing you to specify when an Entity is open or closed.
+description = Defines a 'weekly office hours' field type, allowing you to specify when an Entity is open or closed.
 package = Fields 
 dependencies[] = date_api
 core = 7.x

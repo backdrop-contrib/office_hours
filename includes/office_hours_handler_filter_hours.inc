@@ -138,7 +138,7 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
     if ($which == 'all') {
       $form['value']['value'] = array(
         '#type' => 'select',
-        '#title' => empty($form_state['exposed']) ? t('Choose hour') : '',
+        '#title' => empty($form_state['exposed']) ? t('Please choose an hour.') : '',
         // '#prefix' => t('<div class="form-item"><label>Filter by hours</label><p>Choose the hour to filter by working hours (\'between\') or closed hours(\'not between\')</p></div>'),
         '#default_value' => $this->value['value'],
         '#options' => $opt,
@@ -154,7 +154,7 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
       // the operator is locked.
       $form['value'] = array(
         '#type' => 'select',
-        '#title' => empty($form_state['exposed']) ? t('Choose hour') : '',
+        '#title' => empty($form_state['exposed']) ? t('Please choose an hour.') : '',
         '#default_value' => $this->value['value'],
         '#options' => $opt,
       );
@@ -166,13 +166,13 @@ class office_hours_handler_filter_hours extends views_handler_filter_numeric {
     if ($which == 'all' || $which == 'minmax') {
       $form['value']['min'] = array(
         '#type' => 'select',
-        '#title' => empty($form_state['exposed']) ? t('Choose hour') : '',
+        '#title' => empty($form_state['exposed']) ? t('Please choose an hour.') : '',
         '#default_value' => $this->value['min'],
         '#options' => $opt,
       );
       $form['value']['max'] = array(
         '#type' => 'select',
-        '#title' => empty($form_state['exposed']) ? t('Choose hour') : '',
+        '#title' => empty($form_state['exposed']) ? t('Please choose an hour.') : '',
         '#default_value' => $this->value['max'],
         '#options' => $opt,
       );

@@ -17,7 +17,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $element['#prefix'] = '';
   if ($element['#daydelta'] == 0) {
     // This is the first block, show the dayname.
-    $label = t($element['#dayname']);
+    $label = t($element['#dayname'], array(), array('context' => 'day_name') );
     $label_style = '';
     $block_style = '';
 
@@ -48,7 +48,8 @@ function _office_hours_block_process($element, &$form_state, $form) {
     $label_style = 'style = "text-align:right;"';
     $block_style = 'style = "display:none;"';
 
-    $link = l(t('Add more hours'), '', array('attributes' => array('class' => 'oh-add-more-link')));
+    // Using 'Add more' instead of 'Add more hours' enables automatic translation.
+    $link = l(t('Add more'), '', array('attributes' => array('class' => 'oh-add-more-link')));
     $element['#prefix'] .= $link;
     $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
@@ -70,13 +71,15 @@ function _office_hours_block_process($element, &$form_state, $form) {
   );
   $element['starthours'] = array(
     '#type' => 'office_hours_select',
-    '#prefix' => ' ' . t('from'),
+    // Using capitals enables automatic translation.
+    '#prefix' => ' ' . strtolower( t('From') ),
     '#default_value' => isset($element['#value']['starthours']) ? $element['#value']['starthours'] : NULL ,
     '#field_settings' => $element['#field_settings'],
   );
   $element['endhours'] = array(
     '#type' => 'office_hours_select',
-    '#prefix' => ' ' . t('until'),
+    // Using capitals enables automatic translation.
+    '#prefix' => ' ' . strtolower( t('Until') ),
     '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
     '#field_settings' => $element['#field_settings'],
   );
@@ -141,10 +144,10 @@ function _office_hours_select_validate($element, &$form_state) {
     form_set_value($element, '', $form_state);
   }
   if ($hours < 0 || $hours > 23) {
-    form_error($element, t('Hours should be between 0 and 23.'));
+    form_error($element, t('Hours should be between 0 and 23.', array(), array('office_hours')));
   }
   if ($minutes < 0 || $minutes > 59) {
-    form_error($element, t('Minutes should be between 0 and 59.'));
+    form_error($element, t('Minutes should be between 0 and 59.', array(), array('office_hours')));
   }
 }
 
@@ -177,13 +180,15 @@ function _office_hours_block_validate($element, &$form_state) {
   }
 
   if ($error_text) {
-    $error_text  = t('!weekday: ' . $error_text,
-                     array(
-                       '!weekday' => $element['#dayname'],
-                       '!start' => $limitstart . ':00' ,
-                       '!end' => $limitend . ':00',
-                     ));
-
+    $error_text = t($element['#dayname'], array(), array('context' => 'day_name') )
+                . ': '
+                . t($error_text,
+                    array(
+                      '!start' => $limitstart . ':00' ,
+                      '!end' => $limitend . ':00',
+                    ),
+                    array('context' => 'office_hours')
+                  );
     form_error($element, check_plain($error_text));
   }
 }

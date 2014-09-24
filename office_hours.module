@@ -99,10 +99,10 @@ function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, 
     $form['field']['cardinality'] = array(
       '#type' => 'select',
       '#title' => t('Number of values'),
-      // '#options' => drupal_map_assoc(array(14)) + array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(range(1, 10)),
+      // '#options' => drupal_map_assoc(array(14)) + array(FIELD_CARDINALITY_UNLIMITED => t('unlimited')) + drupal_map_assoc(range(1, 10)),
       // '#options' => drupal_map_assoc(array(14)),
       // '#default_value' => 14,
-      '#options' => array(FIELD_CARDINALITY_UNLIMITED => t('Unlimited')),
+      '#options' => array(FIELD_CARDINALITY_UNLIMITED => t('unlimited')),
       '#default_value' => FIELD_CARDINALITY_UNLIMITED,
       '#description' => $description,
     );
@@ -460,7 +460,7 @@ function office_hours_field_formatter_settings_form($field, $instance, $view_mod
   if ($timezone_fields) {
     $form['timezone_field'] = array(
       '#type' => 'select',
-      '#title' => t('Timezone Field'),
+      '#title' => t('Timezone') . ' ' . t('Field'),
       '#options' => $timezone_fields,
       '#default_value' => $settings['timezone_field'],
       '#description' => t('Should we use another field to set the timezone for these hours?'),
