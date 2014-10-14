@@ -58,6 +58,14 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $element['#prefix'] .= '<div class="office-hours-block-hours">';
 
   $element['#suffix'] = '';
+
+//  $closed = l(t('Closed'), '', array('attributes' => array('class' => 'oh-closed-link')));
+//  $element['#suffix'] .= '<div>' . $closed . '</div>';
+//  if ($element['#day'] == 0) {
+//    $apply = l(t('Apply to all'), '', array('attributes' => array('class' => 'oh-apply-link-' . $element['#daydelta'])));
+//    $element['#suffix'] .= '<div style="margin-left: 10px">' . $apply . '</div>';
+//  }
+
   $element['#suffix'] .= '</div>'; // From-until.
   $element['#suffix'] .= '</div>'; // Field_set-wrapper.
 
@@ -71,15 +79,15 @@ function _office_hours_block_process($element, &$form_state, $form) {
   );
   $element['starthours'] = array(
     '#type' => 'office_hours_select',
-    // Using capitals enables automatic translation.
-    '#prefix' => ' ' . strtolower( t('From') ),
+    // Using capitals enables automatic translation. mb_strtolower also converts 'Á' to 'á'.
+    '#prefix' => ' ' . mb_strtolower( t('From', array('context' => 'office_hours')) ),
     '#default_value' => isset($element['#value']['starthours']) ? $element['#value']['starthours'] : NULL ,
     '#field_settings' => $element['#field_settings'],
   );
   $element['endhours'] = array(
     '#type' => 'office_hours_select',
-    // Using capitals enables automatic translation.
-    '#prefix' => ' ' . strtolower( t('Until') ),
+    // Using capitals enables automatic translation. mb_strtolower also converts 'Á' to 'á'.
+    '#prefix' => ' ' . mb_strtolower( t('To', array('context' => 'office_hours')) ),
     '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
     '#field_settings' => $element['#field_settings'],
   );
