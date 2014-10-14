@@ -19,7 +19,7 @@ function office_hours_field_views_data_alter(&$result, $field, $module) {
         $field_data[$field_name . '_open']['title'] = str_replace('field_', '', $field_name) . ' (' . $field_name . ':open)';
         $field_data[$field_name . '_open']['title short'] = str_replace('field_', '', $field_name) . ':open';
         $field_data[$field_name . '_open']['help'] = 'This is a filter for open/closed entities.';
-        $field_data[$field_name . '_open']['aliases'] = $field_data[$field_name]['aliases'];
+        $field_data[$field_name . '_open']['aliases'] = isset($field_data[$field_name]['aliases']) ? $field_data[$field_name]['aliases'] : array();
         $field_data[$field_name . '_open']['filter'] = array(
           'field' => $field_name,
           'table' => $field_data[$field_name]['field']['table'],

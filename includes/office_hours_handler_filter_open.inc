@@ -7,7 +7,6 @@
 class office_hours_handler_filter_open extends views_handler_filter_in_operator {
 
   function construct() {
-dpm('filter: ' . __FUNCTION__);
     parent::construct();
     $this->value_title = t('Open now');
   }
@@ -21,7 +20,6 @@ dpm('filter: ' . __FUNCTION__);
       'today' => t('Open today'),
       'now' => t('Open now'),
       'closed' => t('Closed'),
-//      'All' => t('-Any-'),
     );
 
     return $this->value_options;
