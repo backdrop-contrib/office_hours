@@ -10,14 +10,25 @@
           $this_tr.hide();
         }
       })
-      .click(show_upon_click);
+      .bind('click', show_upon_click);
+
       fix_striping();
 
-      // Function to show an office-hours-block, when user clicks "Add more hours".
-      function show_upon_click() {
+      // Clear the content of this block, when user clicks "Clear/Remove".
+      $('.oh-clear-link').bind('click', function(e) {
+        $(this).parent().parent().find('.form-select').each(function() {
+          $(this).val(0);
+        });
+        e.preventDefault();
+      });
+
+      // Show an office-hours-block, when user clicks "Add more".
+      function show_upon_click(e) {
         $(this).hide();
         $(this).parent().children("div.office-hours-block").fadeIn("slow");
-        // If the next for has an "add more hours" link, show it.
+        e.preventDefault();
+
+        // If the next item has an "add more" link, show it.
         $next_tr = $(this).closest("tr").next();
         if ($next_tr.find(".oh-add-more-link").length) {
           $next_tr.show();
@@ -36,7 +47,6 @@
           }
         });
       }
-
     }
   };
  })(jQuery);

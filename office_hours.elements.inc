@@ -43,7 +43,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
     $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
   else {
-    // This is an empty following block, so we show the 'add hours link'.
+    // This is an empty following block, so we show the 'add hours' js-link.
     $label = t('and');
     $label_style = 'style = "text-align:right;"';
     $block_style = 'style = "display:none;"';
@@ -59,12 +59,18 @@ function _office_hours_block_process($element, &$form_state, $form) {
 
   $element['#suffix'] = '';
 
-//  $closed = l(t('Closed'), '', array('attributes' => array('class' => 'oh-closed-link')));
-//  $element['#suffix'] .= '<div>' . $closed . '</div>';
-//  if ($element['#day'] == 0) {
-//    $apply = l(t('Apply to all'), '', array('attributes' => array('class' => 'oh-apply-link-' . $element['#daydelta'])));
-//    $element['#suffix'] .= '<div style="margin-left: 10px">' . $apply . '</div>';
-//  }
+  // Show a 'Clear this line' js-link to each element.
+  // Use 'Remove', which has lots of translations.
+  $closed = l(t('Remove'), '', array('attributes' => array('class' => 'oh-clear-link')));
+  $element['#suffix'] .= '<div>' . $closed . '</div>';
+
+/*
+  // Show a 'Apply to all' js-link to the top-most element.
+  if ($element['#day'] == 0 && $element['#daydelta'] == 0) {
+    $apply = l(t('Apply to all'), '', array('attributes' => array('class' => 'oh-apply-link-' . $element['#daydelta'])));
+    $element['#suffix'] .= '<div style="margin-left: 10px">' . $apply . '</div>';
+  }
+*/
 
   $element['#suffix'] .= '</div>'; // From-until.
   $element['#suffix'] .= '</div>'; // Field_set-wrapper.
