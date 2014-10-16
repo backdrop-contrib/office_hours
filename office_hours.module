@@ -116,7 +116,14 @@ function office_hours_form_field_ui_field_edit_form_alter(&$form, &$form_state, 
  */
 function office_hours_field_settings_form($field, $instance, $has_data) {
   $settings = $field['settings'];
-  $hours = _office_hours_show_ampm(date_hours('H', FALSE));
+
+  // Adapt fieldsettings to this special case.
+  $my_settings = $field['settings'];
+  $my_settings['valhrs'] = FALSE;
+  $my_settings['limitstart'] = '';
+  $my_settings['limitend'] = '';
+  $my_settings['hoursformat'] = 'H';
+  $hours = _office_hours_show_ampm(_office_hours_field_widget_hours($my_settings));
 
   $form = array();
   $form['#element_validate'] = array('_office_hours_field_settings_form_validate');
@@ -218,8 +225,8 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
   $form['limits']['#default_value'] = array(
     'day' => 0,
     'daydelta' => 0,
-    'starthours' => $settings['limitstart'] . '00',
-    'endhours' => $settings['limitend'] . '00',
+    'starthours' => $settings['limitstart'],
+    'endhours' => $settings['limitend'],
   );
 */
 
@@ -713,7 +720,7 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
 
   // Get the valid hours. Date API doesn't provide a straight method for this.
   $hours = _office_hours_field_widget_hours($field['settings']);
-  $hours = drupal_map_assoc($hours); // $key == $value.
+//  $hours = drupal_map_assoc($hours); // $key == $value.
 
   // Get the day names, ordered to match the first day of the week,
   // according to system settings.
@@ -837,7 +844,9 @@ function _office_hours_field_widget_hours($settings) {
   $hoursformat = ($settings['hoursformat'] == 1) ? 'g' : 'H'; // 12 or 24 format.
   $required = FALSE;
   $start = ($settings['limitstart'] == '') ? 0 : max(0, $settings['limitstart']);
-  $end = ($settings['limitend'] == '') ? 23 : min(23, $settings['limitend']);
+  $start = (int) $start / 100;
+  $end = ($settings['limitend'] == '') ? 2300 : min(2300, $settings['limitend']);
+  $end = (int) $end / 100;
 
   // Begin modified copy from date_hours().
   $hours = array();
@@ -848,7 +857,7 @@ function _office_hours_field_widget_hours($settings) {
     for ($i = $min; $i <= $max; $i++) {
       if ((($i >= $start) && ($i <= $end)) || ($end - $start >= 11)) {
         $hour = ($i <= 12) ? $i : $i - 12;
-        $hours[$hour] = $hour < 10 && ($hoursformat == 'H' || $hoursformat == 'h') ? "0$hour" : $hour;
+        $hours[$hour * 100] = $hour < 10 && ($hoursformat == 'H' || $hoursformat == 'h') ? "0$hour" : $hour;
       }
 
     }
@@ -859,10 +868,9 @@ function _office_hours_field_widget_hours($settings) {
     $max = $end;
     for ($i = $min; $i <= $max; $i++) {
       $hour = $i;
-      $hours[$hour] = $hour < 10 && ($hoursformat == 'H' || $hoursformat == 'h') ? "0$hour" : $hour;
+      $hours[$hour * 100] = $hour < 10 && ($hoursformat == 'H' || $hoursformat == 'h') ? "0$hour" : $hour;
     }
   }
-
   $none = array('' => '');
   $hours = !$required ? $none + $hours : $hours;
   // End modified copy from date_hours().
@@ -935,6 +943,7 @@ function _office_hours_field_widget_time_parse($time, $hoursformat) {
     $timeformat = ($hoursformat == 1) ? 'g:i:a' : 'H:i:a'; // 12hrs or 24hrs
     $time = _office_hours_time_format($time, $timeformat);
     list($hour, $min, $ampm) = explode(':', $time);
+    $hour = $hour * 100;
   }
 
   $result = array('hour' => $hour, 'minute' => $min, 'ampm' => $ampm);

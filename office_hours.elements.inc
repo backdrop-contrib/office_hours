@@ -64,13 +64,11 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $closed = l(t('Remove'), '', array('attributes' => array('class' => 'oh-clear-link')));
   $element['#suffix'] .= '<div>' . $closed . '</div>';
 
-/*
   // Show a 'Apply to all' js-link to the top-most element.
   if ($element['#day'] == 0 && $element['#daydelta'] == 0) {
     $apply = l(t('Apply to all'), '', array('attributes' => array('class' => 'oh-apply-link-' . $element['#daydelta'])));
     $element['#suffix'] .= '<div style="margin-left: 10px">' . $apply . '</div>';
   }
-*/
 
   $element['#suffix'] .= '</div>'; // From-until.
   $element['#suffix'] .= '</div>'; // Field_set-wrapper.
@@ -85,14 +83,14 @@ function _office_hours_block_process($element, &$form_state, $form) {
   );
   $element['starthours'] = array(
     '#type' => 'office_hours_select',
-    // Using capitals enables automatic translation. mb_strtolower also converts 'Á' to 'á'.
+    // Using capitals enables automatic translation. mb_strtolower also converts 'Ã€' to 'Ã '.
     '#prefix' => ' ' . mb_strtolower( t('From', array('context' => 'office_hours')) ),
     '#default_value' => isset($element['#value']['starthours']) ? $element['#value']['starthours'] : NULL ,
     '#field_settings' => $element['#field_settings'],
   );
   $element['endhours'] = array(
     '#type' => 'office_hours_select',
-    // Using capitals enables automatic translation. mb_strtolower also converts 'Á' to 'á'.
+    // Using capitals enables automatic translation. mb_strtolower also converts 'Ã€' to 'Ã '.
     '#prefix' => ' ' . mb_strtolower( t('To', array('context' => 'office_hours')) ),
     '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
     '#field_settings' => $element['#field_settings'],
@@ -144,20 +142,20 @@ function _office_hours_select_validate($element, &$form_state) {
   if ($element['#field_settings']['hoursformat'] == 1) {
     // 12 hrs format.
     if ($element['ampm']['#value'] == 'pm' && $hours < 12) {
-      $hours += 12;
+      $hours += 1200;
     }
     if ($element['ampm']['#value'] == 'am' && $hours == 12) {
-      $hours = '00';
+      $hours = '0000';
     }
   }
 
   if ($hours != '' && $minutes != '') {
-    form_set_value($element, (string) $hours . $minutes, $form_state);
+    form_set_value($element, (string) $hours + $minutes, $form_state);
   }
   else {
     form_set_value($element, '', $form_state);
   }
-  if ($hours < 0 || $hours > 23) {
+  if ($hours < 0000 || $hours > 2300) {
     form_error($element, t('Hours should be between 0 and 23.', array(), array('office_hours')));
   }
   if ($minutes < 0 || $minutes > 59) {
@@ -188,7 +186,7 @@ function _office_hours_block_validate($element, &$form_state) {
   elseif (!empty($limitstart) || !empty($limitend)) {
     $starthours = $item['starthours'];
     $endhours = $item['endhours'];
-    if (($starthours && ($limitstart * 100) > $starthours) || ($endhours && ($limitend * 100) < $endhours)) {
+    if (($starthours && $limitstart > $starthours) || ($endhours && $limitend < $endhours)) {
       $error_text = 'Hours are outside limits ( !start - !end ).';
     }
   }
@@ -198,8 +196,8 @@ function _office_hours_block_validate($element, &$form_state) {
                 . ': '
                 . t($error_text,
                     array(
-                      '!start' => $limitstart . ':00' ,
-                      '!end' => $limitend . ':00',
+                      '!start' => _office_hours_time_to_24hr($limitstart),
+                      '!end' => _office_hours_time_to_24hr($limitend),
                     ),
                     array('context' => 'office_hours')
                   );
