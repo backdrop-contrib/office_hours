@@ -141,10 +141,10 @@ function _office_hours_select_validate($element, &$form_state) {
   $minutes = ($element['minutes']['#value'] == 0) ? '00' : $element['minutes']['#value'];
   if ($element['#field_settings']['hoursformat'] == 1) {
     // 12 hrs format.
-    if ($element['ampm']['#value'] == 'pm' && $hours < 12) {
+    if ($element['ampm']['#value'] == 'pm' && $hours < 1200) {
       $hours += 1200;
     }
-    if ($element['ampm']['#value'] == 'am' && $hours == 12) {
+    if ($element['ampm']['#value'] == 'am' && $hours == 1200) {
       $hours = '0000';
     }
   }
