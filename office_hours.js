@@ -17,7 +17,7 @@
       // Clear the content of this block, when user clicks "Clear/Remove".
       $('.oh-clear-link').bind('click', function(e) {
         $(this).parent().parent().find('.form-select').each(function() {
-          $(this).val(0);
+          $(this).val($("#target option:first").val());
         });
         e.preventDefault();
       });
