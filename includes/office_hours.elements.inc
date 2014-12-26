@@ -64,8 +64,9 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $closed = l(t('Remove'), '', array('attributes' => array('class' => 'oh-clear-link')));
   $element['#suffix'] .= '<div>' . $closed . '</div>';
 
-  // Show a 'Apply to all' js-link to the top-most element.
-  if ($element['#day'] == 0 && $element['#daydelta'] == 0) {
+  // Show an 'Apply to all' js-link to the top-most element.
+  $first_day = variable_get('date_first_day', 0);
+  if ($element['#day'] == $first_day && $element['#daydelta'] == 0) {
     $apply = l(t('Apply to all'), '', array('attributes' => array('class' => 'oh-apply-link-' . $element['#daydelta'])));
     $element['#suffix'] .= '<div style="margin-left: 10px">' . $apply . '</div>';
   }

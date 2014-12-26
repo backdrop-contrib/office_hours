@@ -2,8 +2,9 @@
 
 /**
  * @file
- * Implements the office_hours widet.
+ * Implements the office_hours widget.
  */
+
 /**
  * Implements hook_field_widget_info().
  */
