@@ -1,7 +1,10 @@
 (function ($) {
   Drupal.behaviors.office_hours = {
     attach: function(context,settings) {
+
+      // Hide every item above the max blocks per day.
       $(".oh-hide", context).parent().hide();
+
       $(".oh-add-more-link", context).each(function (i) {
         $(this).parent().children("div.office-hours-block").hide();
         // If the previous row has an "Add more hours" link, and the office-hours-block is hidden, don't show this line.
@@ -36,28 +39,6 @@
         fix_striping();
         return false;
       };
-
-      $('.oh-apply-link-0').bind('click', function (e) {
-        // Get field name.
-        var $field_name = $(this).closest('.field-type-office-hours').attr('id');
-
-        // Get field name with language and delta.
-        $this_field_classes = $(this).parent().parent().children().closest('div').attr('class').split(' ');
-        $($this_field_classes).each(function (i, val){
-          if (/form-item-field/i.test(val)) {
-            $this_field_name = val.replace('form-item-','').replace('-starthours-hours','');
-          }
-        });
-
-        $('select[id^='+$field_name+'][id$="starthours-hours"]').val($('#edit-'+$this_field_name+'-starthours-hours').val());
-        $('select[id^='+$field_name+'][id$="starthours-minutes"]').val($('#edit-'+$this_field_name+'-starthours-minutes').val());
-        $('select[id^='+$field_name+'][id$="starthours-ampm"]').val($('#edit-'+$this_field_name+'-starthours-ampm').val());
-        $('select[id^='+$field_name+'][id$="endhours-hours"]').val($('#edit-'+$this_field_name+'-endhours-hours').val());
-        $('select[id^='+$field_name+'][id$="endhours-minutes"]').val($('#edit-'+$this_field_name+'-endhours-minutes').val());
-        $('select[id^='+$field_name+'][id$="endhours-ampm"]').val($('#edit-'+$this_field_name+'-endhours-ampm').val());
-
-        e.preventDefault();
-      });
 
       // Function to traverse visible rows and apply even/odd classes.
       function fix_striping() {

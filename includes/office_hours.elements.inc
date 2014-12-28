@@ -15,32 +15,37 @@
  */
 function _office_hours_block_process($element, &$form_state, $form) {
   $element['#prefix'] = '';
-  if ($element['#daydelta'] == 0) {
+  $element['#suffix'] = '';
+
+  $blocks_per_day = $element['#field_settings']['cardinality'];
+  $daydelta = $element['#daydelta'];
+
+  if ($daydelta == 0) {
     // This is the first block, show the dayname.
     $label = t($element['#dayname'], array(), array('context' => 'day_name') );
     $label_style = '';
     $block_style = '';
-
-    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
-  elseif ($element['#field_settings']['cardinality'] == 1) {
-    // This is the second cell and we're not showing it- better clear it (in case a value was entered before).
-    // @todo: not used, since we check cardinality in widget_form. Keep this for later support of 'unlimited' (value -1).
+  elseif ($daydelta >= $blocks_per_day) {
+    // In case the number of blocks per day was lowered by admin, this element
+    // may have a value. Better clear it (in case a value was entered before).
+    // The value will be removed upon the next 'Save' action.
     $label = '';
     $label_style = '';
-    $block_style = ' style = "display:none;"';
+    // The following style is only needed if js isn't working.
+    $block_style = 'style = "display:none;"';
 
     $element['#value']['starthours'] = '';
     $element['#value']['endhours'] = '';
-    $element['#prefix'] = "<div class='oh-hide'>";
+    // The following class is the trigger for js to hide the row. 
+    $element['#prefix'] .= "<div class='oh-hide'>";
+    $element['#suffix'] .= '</div>';
   }
   elseif (!empty($element['#value']['starthours'])) {
     // This is a following block with contents, so we show the times.
     $label = t('and');
     $label_style = 'style = "text-align:right;"';
     $block_style = '';
-
-    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
   else {
     // This is an empty following block, so we show the 'add hours' js-link.
@@ -51,28 +56,16 @@ function _office_hours_block_process($element, &$form_state, $form) {
     // Using 'Add more' instead of 'Add more hours' enables automatic translation.
     $link = l(t('Add more'), '', array('attributes' => array('class' => 'oh-add-more-link')));
     $element['#prefix'] .= $link;
-    $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   }
+  $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   $element['#prefix'] .= '<label '. $label_style. '>' . $label . '</label>';
-
-  $element['#prefix'] .= '<div class="office-hours-block-hours">';
-
-  $element['#suffix'] = '';
 
   // Show a 'Clear this line' js-link to each element.
   // Use 'Remove', which has lots of translations.
-  $closed = l(t('Remove'), '', array('attributes' => array('class' => 'oh-clear-link')));
-  $element['#suffix'] .= '<div>' . $closed . '</div>';
+  $clear_link = l(t('Remove'), '', array('attributes' => array('class' => 'oh-clear-link')));
+  $element['#suffix'] .= '<div>' . $clear_link . '</div>';
 
-  // Show an 'Apply to all' js-link to the top-most element.
-  $first_day = variable_get('date_first_day', 0);
-  if ($element['#day'] == $first_day && $element['#daydelta'] == 0) {
-    $apply = l(t('Apply to all'), '', array('attributes' => array('class' => 'oh-apply-link-' . $element['#daydelta'])));
-    $element['#suffix'] .= '<div style="margin-left: 10px">' . $apply . '</div>';
-  }
-
-  $element['#suffix'] .= '</div>'; // From-until.
-  $element['#suffix'] .= '</div>'; // Field_set-wrapper.
+  $element['#suffix'] .= '</div>'; // class="form-item office-hours-block ".
 
   $element['day'] = array(
     '#type' => 'value',
@@ -85,14 +78,14 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $element['starthours'] = array(
     '#type' => 'office_hours_select',
     // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-    '#prefix' => ' ' . mb_strtolower( t('From', array('context' => 'office_hours')) ),
+    '#prefix' => mb_strtolower( t('From', array('context' => 'office_hours')) ),
     '#default_value' => isset($element['#value']['starthours']) ? $element['#value']['starthours'] : NULL ,
     '#field_settings' => $element['#field_settings'],
   );
   $element['endhours'] = array(
     '#type' => 'office_hours_select',
     // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-    '#prefix' => ' ' . mb_strtolower( t('To', array('context' => 'office_hours')) ),
+    '#prefix' => mb_strtolower( t('To', array('context' => 'office_hours')) ),
     '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
     '#field_settings' => $element['#field_settings'],
   );
@@ -113,6 +106,7 @@ function _office_hours_select_value_callback($element, $input = FALSE, &$form_st
  * Process the office_hours_select element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
+
   $element['hours'] = array(
     '#type' => 'select',
     '#options' => $element['#field_settings']['#hours'],
