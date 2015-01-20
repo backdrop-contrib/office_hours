@@ -145,7 +145,7 @@ function _office_hours_select_validate($element, &$form_state) {
   }
 
   if ($hours != '' && $minutes != '') {
-    form_set_value($element, (string) $hours + $minutes, $form_state);
+    form_set_value($element, _office_hours_time_to_mil($hours + $minutes), $form_state);
   }
   else {
     form_set_value($element, '', $form_state);
@@ -172,7 +172,8 @@ function _office_hours_block_validate($element, &$form_state) {
   $valhrs = $element['#field_settings']['valhrs'];
   $limitstart = $element['#field_settings']['limitstart'];
   $limitend = $element['#field_settings']['limitend'];
-  if (!empty($item['starthours']) xor !empty($item['endhours'])) {
+  // Do not use empty(), since '0' is a valid value, too.
+  if ($item['starthours'] == '' xor $item['endhours'] == '') {
     $error_text = 'Both Opening hours and Closing hours must be set.';
   }
   elseif ($valhrs && ($item['starthours'] > $item['endhours'])) {
