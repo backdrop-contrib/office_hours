@@ -144,6 +144,7 @@ function _office_hours_select_validate($element, &$form_state) {
     }
   }
 
+dpm($hours .' '. $minutes);
   if ($hours != '' && $minutes != '') {
     form_set_value($element, _office_hours_time_to_mil($hours + $minutes), $form_state);
   }

@@ -411,6 +411,15 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
         'daynames' => $daynames,
         'open'     => $open,
         'timezone' => $timezone,
+        'context' => array(
+          'entity_type' => $entity_type,
+          'entity' => $entity,
+          'field' => $field,
+          'instance' => $instance,
+          'langcode' => $langcode,
+          'items' => $items,
+          'display' => $display,
+        ),
       )
     ),
   );
