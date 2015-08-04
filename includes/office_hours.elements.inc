@@ -78,14 +78,14 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $element['starthours'] = array(
     '#type' => 'office_hours_select',
     // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-    '#prefix' => mb_strtolower( t('From', array('context' => 'office_hours')) ),
+    '#prefix' => mb_strtolower( t('From', array('context' => 'office_hours')) ) . ' ',
     '#default_value' => isset($element['#value']['starthours']) ? $element['#value']['starthours'] : NULL ,
     '#field_settings' => $element['#field_settings'],
   );
   $element['endhours'] = array(
     '#type' => 'office_hours_select',
     // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-    '#prefix' => mb_strtolower( t('To', array('context' => 'office_hours')) ),
+    '#prefix' => mb_strtolower( t('To', array('context' => 'office_hours')) ) . ' ',
     '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
     '#field_settings' => $element['#field_settings'],
   );
@@ -144,7 +144,6 @@ function _office_hours_select_validate($element, &$form_state) {
     }
   }
 
-dpm($hours .' '. $minutes);
   if ($hours != '' && $minutes != '') {
     form_set_value($element, _office_hours_time_to_mil($hours + $minutes), $form_state);
   }
