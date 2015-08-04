@@ -106,7 +106,6 @@ function _office_hours_select_value_callback($element, $input = FALSE, &$form_st
  * Process the office_hours_select element.
  */
 function _office_hours_select_process($element, &$form_state, $form) {
-
   $element['hours'] = array(
     '#type' => 'select',
     '#options' => $element['#field_settings']['#hours'],

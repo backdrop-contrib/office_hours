@@ -25,6 +25,14 @@ div.field-type-office-hours div.office-hours-block div {
   display: inline-block;
 }
 
+/* Time blocks in the Dynamic Widget on field and field settings. */
+.field-widget-office-hours-dynamic-widget label,
+.field-widget-office-hours-dynamic-widget .form-item {
+  display: inline;
+  display: -moz-inline-box;
+  display: inline-block;
+}
+
 /* 'Day' label in the Widget on field and field settings. */
 td div.office-hours-block label {
   width: 6em;
