@@ -242,6 +242,18 @@ function office_hours_field_formatter_view($entity_type, $entity, $field, $insta
     return $element;
   }
 
+  // Allow other modules to alter the items before the calculations are done.
+  // @see office_hours.api.php for an example.
+  $context = array(
+    'entity_type' => $entity_type,
+    'entity' => $entity,
+    'field' => $field,
+    'instance' => $instance,
+    'langcode' => $langcode,
+    'display' => $display,
+  );
+  drupal_alter('office_hours_field_formatter_view', $items, $context);
+
   // Initialize formatter settings.
   $settings = _office_hours_field_formatter_defaults($display['settings']);
 
