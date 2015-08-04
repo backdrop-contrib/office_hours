@@ -58,7 +58,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
     $element['#prefix'] .= $link;
   }
   $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
-  $element['#prefix'] .= '<label '. $label_style. '>' . $label . '</label>';
+  $element['#prefix'] .= '<label ' . $label_style . '>' . $label . '</label>';
 
   // Show a 'Clear this line' js-link to each element.
   // Use 'Remove', which has lots of translations.
