@@ -22,7 +22,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
 
   if ($daydelta == 0) {
     // This is the first block, show the dayname.
-    $label = t($element['#dayname'], array(), array('context' => 'day_name') );
+    $label = t($element['#dayname']);
     $label_style = '';
     $block_style = '';
   }
@@ -187,7 +187,7 @@ function _office_hours_block_validate($element, &$form_state) {
   }
 
   if ($error_text) {
-    $error_text = t($element['#dayname'], array(), array('context' => 'day_name') )
+    $error_text = t($element['#dayname'])
                 . ': '
                 . t($error_text,
                     array(
