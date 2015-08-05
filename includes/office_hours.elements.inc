@@ -53,15 +53,14 @@ function _office_hours_block_process($element, &$form_state, $form) {
     $label_style = 'style = "text-align:right;"';
     $block_style = 'style = "display:none;"';
 
-    // Using 'Add more' instead of 'Add more hours' enables automatic translation.
-    $link = l(t('Add more'), '', array('attributes' => array('class' => 'oh-add-more-link')));
+    $link = l(t('Add new @node_type', array('@node_type' => t('Time'), '%type' => 'Time')), '', array('attributes' => array('class' => 'oh-add-more-link')));
     $element['#prefix'] .= $link;
   }
   $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
   $element['#prefix'] .= '<label ' . $label_style . '>' . $label . '</label>';
 
   // Show a 'Clear this line' js-link to each element.
-  // Use 'Remove', which has lots of translations.
+  // Use text 'Remove', which has lots of translations.
   $clear_link = l(t('Remove'), '', array('attributes' => array('class' => 'oh-clear-link')));
   $element['#suffix'] .= '<div>' . $clear_link . '</div>';
 
@@ -77,15 +76,12 @@ function _office_hours_block_process($element, &$form_state, $form) {
   );
   $element['starthours'] = array(
     '#type' => 'office_hours_select',
-    // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-    '#prefix' => mb_strtolower( t('From', array('context' => 'office_hours')) ) . ' ',
     '#default_value' => isset($element['#value']['starthours']) ? $element['#value']['starthours'] : NULL ,
     '#field_settings' => $element['#field_settings'],
   );
   $element['endhours'] = array(
     '#type' => 'office_hours_select',
-    // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-    '#prefix' => mb_strtolower( t('To', array('context' => 'office_hours')) ) . ' ',
+    '#prefix' => t("@from to @to", array('@from' => '', '@to' => '')),
     '#default_value' => isset($element['#value']['endhours']) ? $element['#value']['endhours'] : NULL,
     '#field_settings' => $element['#field_settings'],
   );

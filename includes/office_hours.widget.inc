@@ -107,14 +107,14 @@ function office_hours_field_widget_form(&$form, &$form_state, $field, $instance,
       $widget['starthours'] = array(
         '#type' => 'office_hours_select',
         // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-        '#prefix' => mb_strtolower( t('From', array('context' => 'office_hours')) ) . ' ',
+//        '#prefix' => mb_strtolower( t('From', array('context' => 'office_hours')) ) . ' ',
         '#default_value' => isset($items[$delta]['starthours']) ? $items[$delta]['starthours'] : NULL,
         '#field_settings' => $settings,
       );
       $widget['endhours'] = array(
         '#type' => 'office_hours_select',
         // Using capitals enables automatic translation. mb_strtolower also converts 'À' to 'à'.
-        '#prefix' => mb_strtolower( t('To', array('context' => 'office_hours')) ) . ' ',
+        '#prefix' => t("@from to @to", array('@from' => '', '@to' => '')),
         '#default_value' => isset($items[$delta]['endhours']) ? $items[$delta]['endhours'] : NULL,
         '#field_settings' => $settings,
       );
