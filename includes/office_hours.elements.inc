@@ -167,16 +167,17 @@ function _office_hours_block_validate($element, &$form_state) {
   $valhrs = $element['#field_settings']['valhrs'];
   $limitstart = $element['#field_settings']['limitstart'];
   $limitend = $element['#field_settings']['limitend'];
+  $starthours = $item['starthours'];
+  $endhours = $item['endhours'];
   // Do not use empty(), since '0' is a valid value, too.
-  if ($item['starthours'] == '' xor $item['endhours'] == '') {
+  if ($starthours == '' xor $endhours == '') {
     $error_text = 'Both Opening hours and Closing hours must be set.';
   }
-  elseif ($valhrs && ($item['starthours'] > $item['endhours'])) {
+  // Endhours can be '0' because we can close at midnight.
+  elseif ($valhrs && ($starthours > $endhours) && ($endhours != 0)) {
     $error_text = 'Closing hours are earlier than Opening hours.';
   }
   elseif (!empty($limitstart) || !empty($limitend)) {
-    $starthours = $item['starthours'];
-    $endhours = $item['endhours'];
     if (($starthours && $limitstart > $starthours) || ($endhours && $limitend < $endhours)) {
       $error_text = 'Hours are outside limits ( !start - !end ).';
     }
