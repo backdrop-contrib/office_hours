@@ -113,9 +113,26 @@ function _office_hours_select_process($element, &$form_state, $form) {
     '#default_value' => $element['#value']['minute'],
   );
   if ($element['#field_settings']['hoursformat'] == 1) {
+    // ampm options, taken from date_ampm().
+    $options = date_ampm();
     $element['ampm'] = array(
       '#type' => 'select',
-      '#options' => date_ampm(),
+      '#options' => $options,
+      '#default_value' => $element['#value']['ampm'],
+    );
+  }
+  elseif ($element['#field_settings']['hoursformat'] == 3) {
+    // ampm options, taken from date_ampm().
+    $none = array('' => '');
+    $ampm = array(
+      'am' => t('a.m.', array(), array('context' => 'ampm')),
+      'pm' => t('p.m.', array(), array('context' => 'ampm')),
+    );
+    $options = $none + $ampm;
+
+    $element['ampm'] = array(
+      '#type' => 'select',
+      '#options' => $options,
       '#default_value' => $element['#value']['ampm'],
     );
   }
@@ -130,11 +147,11 @@ function _office_hours_select_validate($element, &$form_state) {
   $hours = $element['hours']['#value'];
   $minutes = ($element['minutes']['#value'] == 0) ? '00' : $element['minutes']['#value'];
   if ($element['#field_settings']['hoursformat'] == 1) {
-    // 12 hrs format.
-    if ($element['ampm']['#value'] == 'pm' && $hours < 1200) {
+    // 12 hrs format with 'a.m.' or 'am'.
+    if ($element['ampm']['#value'][0] == 'p' && $hours < 1200) {
       $hours += 1200;
     }
-    if ($element['ampm']['#value'] == 'am' && $hours == 1200) {
+    if ($element['ampm']['#value'][0] == 'a' && $hours == 1200) {
       $hours = '0000';
     }
   }
