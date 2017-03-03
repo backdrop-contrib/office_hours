@@ -242,6 +242,7 @@ function office_hours_field_is_empty($item, $field) {
  *   Whether or not the instance is considered empty.
  */
 function office_hours_instance_is_empty($items) {
+  dpm(__FUNCTION__);
   foreach ($items as $delta => $item) {
     if (!office_hours_field_is_empty($item, 'office_hours_select')) {
       return FALSE;
@@ -268,7 +269,7 @@ function office_hours_instance_is_empty($items) {
 function office_hours_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   if (!empty($entity_type) && $instance['required']) {
     if (empty($items) || office_hours_instance_is_empty($items)) {
-      $errors[$field['field_name']][$langcode]['requred'][] = array(
+      $errors[$field['field_name']][$langcode][0][] = array(
         'error' => 'office_hours_required',
         'message' => t('%name field is required. Please fill in one or more of the hour blocks.', array('%name' => $instance['label'])),
       );
