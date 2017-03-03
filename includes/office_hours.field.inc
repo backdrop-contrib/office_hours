@@ -242,7 +242,6 @@ function office_hours_field_is_empty($item, $field) {
  *   Whether or not the instance is considered empty.
  */
 function office_hours_instance_is_empty($items) {
-  dpm(__FUNCTION__);
   foreach ($items as $delta => $item) {
     if (!office_hours_field_is_empty($item, 'office_hours_select')) {
       return FALSE;
