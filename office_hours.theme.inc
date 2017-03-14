@@ -9,9 +9,9 @@
  */
 function theme_office_hours_field_formatter_default($vars) {
   $days = $vars['days'];
-  $settings = $vars['settings'];
   $daynames = $vars['daynames'];
   $open = $vars['open'];
+  $settings = $vars['settings'];
 
   switch ($settings['hoursformat']) {
     case 2:
@@ -49,7 +49,7 @@ function theme_office_hours_field_formatter_default($vars) {
 
     // Format the time.
     if (!$info['times']) {
-      $times = filter_xss(t($settings['closedformat']));
+      $times = t($settings['closedformat']);
     }
     else {
       $times = array();
@@ -135,7 +135,7 @@ function theme_office_hours_field_formatter_default($vars) {
       break;
   }
 
-  return $html;
+  return filter_xss_admin($html);
 }
 
 /**
