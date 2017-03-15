@@ -18,7 +18,7 @@ module_load_include('inc', 'office_hours', 'includes/office_hours.widget');
  */
 function office_hours_theme($existing, $type, $theme, $path) {
   $base = array(
-    'file' => 'office_hours.theme.inc',
+    'file' => 'includes/office_hours.theme.inc',
     'path' => "$path",
   );
   $themes = array(
