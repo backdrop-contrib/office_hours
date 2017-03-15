@@ -3,6 +3,7 @@ description = Defines a 'weekly office hours' field type, allowing you to specif
 package = Fields
 dependencies[] = date
 dependencies[] = date_api
+dependencies[] = field
 core = 7.x
 
 files[] = includes/office_hours_handler_filter_open.inc
