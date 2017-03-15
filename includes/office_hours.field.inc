@@ -62,6 +62,13 @@ function office_hours_property_info_callback(&$info, $entity_type, $field, $inst
     'setter callback' => 'entity_property_verbatim_set',
     'default' => 0,
   );
+  $property['property info']['comment'] = array(
+    'type' => 'varchar',
+    'label' => t('Comment'),
+    'description' => 'Stores the comment',
+    'setter callback' => 'entity_property_verbatim_set',
+    'default' => 0,
+  );
 }
 
 /**
