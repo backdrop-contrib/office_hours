@@ -14,6 +14,7 @@ function office_hours_field_info() {
       'label' => t('Office hours'),
       'description' => t("This field stores weekly 'office hours' or 'opening hours' in the database."),
       'settings' => array(
+        'comment' => 0,
         'hoursformat' => 0,
         'granularity' => 60,
         'limitstart' => '',
@@ -168,6 +169,13 @@ function office_hours_field_settings_form($field, $instance, $has_data) {
     '#default_value' => $settings['granularity'],
     '#required' => FALSE,
     '#description' => t('Restrict the input to fixed fractions of an hour.'),
+  );
+  $form['comment'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow a comment per time slot'),
+    '#required' => FALSE,
+    '#default_value' => $settings['comment'],
+    // '#description' => t('Allow a comment per time slot.'),
   );
   $form['valhrs'] = array(
     '#type' => 'checkbox',
