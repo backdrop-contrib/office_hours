@@ -49,6 +49,7 @@ function theme_office_hours_field_formatter_default($vars) {
 
     // Format the time.
     if (!$info['times']) {
+      // Closed day.
       $times = t($settings['closedformat']);
       $comment = NULL;
     }

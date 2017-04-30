@@ -36,6 +36,9 @@ function _office_hours_block_process($element, &$form_state, $form) {
     // The following style is only needed if js isn't working.
     $block_style = 'style = "display:none;"';
 
+    if (empty($element['#value'])) {
+      $element['#value'] = array();
+    }
     $element['#value']['starthours'] = '';
     $element['#value']['endhours'] = '';
     // The following class is the trigger for js to hide the row. 
