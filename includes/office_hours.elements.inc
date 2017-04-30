@@ -24,12 +24,12 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $same_link = '';
 
   if ($daydelta == 0) {
-    // This is the first block, show the dayname.
+    // This is the first block of the day, show the dayname.
     $label = t($element['#dayname']);
     $label_style = '';
     $block_style = '';
-    // Skip the first day for the same as above link
-    if ($day > 0) {
+    // Add 'Same as above' link, except for first day in widget.
+    if ($day <> $element['#field_settings']['date_first_day']) {
         $same_link = l(t('Same as above'), '', array('attributes' => array('class' => 'oh-same-link')));
     }
   }
