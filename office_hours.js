@@ -26,6 +26,26 @@
         e.preventDefault();
       });
 
+	  //same as above
+      $('.oh-same-link').bind('click', function(e) {
+          e.preventDefault();
+          var current_day = parseInt($(this).parent().parent().attr('data-day'));
+          var previous_day = current_day - 1;
+
+          //select current table
+          var tbody = $(this).closest('tbody');
+          //divs from current day
+          var current_selector = tbody.find('div[data-day="' + current_day + '"]');
+          //divs from previous day
+          var previous_selector = tbody.find('div[data-day="' + previous_day + '"]');
+
+          //replace current values with the ones from the previous day
+          current_selector.find('.form-select').each(function(index, value) {
+              var previous_value = previous_selector.find('.form-select').eq(index).val();
+              $(this).val(previous_value);
+          });
+      });
+
       // Show an office-hours-block, when user clicks "Add more".
       function show_upon_click(e) {
         $(this).hide();

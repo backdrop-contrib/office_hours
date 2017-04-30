@@ -20,12 +20,18 @@ function _office_hours_block_process($element, &$form_state, $form) {
   $has_comment = isset($element['#field_settings']['comment']) ? $element['#field_settings']['comment'] : FALSE;
   $blocks_per_day = $element['#field_settings']['cardinality'];
   $daydelta = $element['#daydelta'];
+  $day = $element['#day'];
+  $same_link = '';
 
   if ($daydelta == 0) {
     // This is the first block, show the dayname.
     $label = t($element['#dayname']);
     $label_style = '';
     $block_style = '';
+    // Skip the first day for the same as above link
+    if ($day > 0) {
+        $same_link = l(t('Same as above'), '', array('attributes' => array('class' => 'oh-same-link')));
+    }
   }
   elseif ($daydelta >= $blocks_per_day) {
     // In case the number of blocks per day was lowered by admin, this element
@@ -60,13 +66,13 @@ function _office_hours_block_process($element, &$form_state, $form) {
     $link = l(t('Add new @node_type', array('@node_type' => t('Time'), '%type' => 'Time')), '', array('attributes' => array('class' => 'oh-add-more-link')));
     $element['#prefix'] .= $link;
   }
-  $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . '>';
+  $element['#prefix'] .= '<div class="form-item office-hours-block" ' . $block_style . ' data-day="' . $day . '">';
   $element['#prefix'] .= '<label ' . $label_style . '>' . $label . '</label>';
 
   // Show a 'Clear this line' js-link to each element.
   // Use text 'Remove', which has lots of translations.
   $clear_link = l(t('Remove'), '', array('attributes' => array('class' => 'oh-clear-link')));
-  $element['#suffix'] .= '<div>' . $clear_link . '</div>';
+  $element['#suffix'] .= '<div>' . $clear_link . '&nbsp;&nbsp;&nbsp;' . $same_link . '</div>';
 
   $element['#suffix'] .= '</div>'; // class="form-item office-hours-block ".
 
