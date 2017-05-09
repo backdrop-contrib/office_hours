@@ -39,10 +39,12 @@
         // Div's from previous day.
         var previous_selector = tbody.find('div[data-day="' + previous_day + '"]');
 
-        // Replace current values with the ones from the previous day.
-        current_selector.find('.form-select').each(function (index, value) {
-          var previous_value = previous_selector.find('.form-select').eq(index).val();
-          $(this).val(previous_value);
+        // Replace current day values with the ones from the previous day.
+        previous_selector.find('.form-select:visible').each(function (index, value) {
+          var previous_value = $(this).val();
+          current_selector.find('.form-select').eq(index).val(previous_value);
+          //"unhide" copied value using add more link
+          current_selector.find('.form-select').eq(index).closest('tr').find('.oh-add-more-link').click();
         });
       });
 
