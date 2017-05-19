@@ -28,10 +28,9 @@ function _office_hours_block_process($element, &$form_state, $form) {
     $label = t($element['#dayname']);
     $label_style = '';
     $block_style = '';
-    // Add 'Same as above' link, except for first day in widget.
-    if ($day <> $element['#field_settings']['date_first_day']) {
-        $same_link = l(t('Same as above'), '', array('attributes' => array('class' => 'oh-same-link')));
-    }
+    // Add 'Same as above' link, also for first day in widget, which copies from last day.
+    $same_link_text = t($day <> $element['#field_settings']['date_first_day'] ? 'Same as above' : 'Same as last day');
+    $same_link = l($same_link_text, '', array('attributes' => array('class' => 'oh-same-link')));
   }
   elseif ($daydelta >= $blocks_per_day) {
     // In case the number of blocks per day was lowered by admin, this element

@@ -31,6 +31,9 @@
         e.preventDefault();
         var current_day = parseInt($(this).parent().parent().attr('data-day'));
         var previous_day = current_day - 1;
+        if (current_day == 0) {
+          previous_day = current_day + 6;
+        }
 
         // Select current table.
         var tbody = $(this).closest('tbody');
