@@ -112,38 +112,35 @@ function theme_office_hours_field_formatter_default($vars) {
                . '</span>';
   }
 
-  $html_hours = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '') . '">' . $html_hours . '</span>';
+  $html = '<span class="oh-wrapper' . ($settings['grouped'] ? ' oh-display-grouped' : '') . '">' . $html_hours . '</span>';
 
-  // Generate HTML for CurrentStatus. Visibility is switched in js, otherwise the output might be wrong with static caching.
-  $context_id_array = entity_extract_ids($vars['context']['entity_type'], $vars['context']['entity']);
-  $context_id = implode('-', $context_id_array);
-  $html_current_status = '<div class="oh-current-wrapper" data-oh-current-context_id="' . $context_id . '">';
-  $html_current_status .= '<div class="oh-current-open element-invisible">' . $settings['current_status']['open_text'] . '</div>';
-  $html_current_status .= '<div class="oh-current-closed element-invisible">' . $settings['current_status']['closed_text'] . '</div>';
-  $html_current_status .= '</div>';
-  drupal_add_js(array(
-    'office_hours' => array (
-      'instances' => array (
-        $context_id => array (
-          'days' => $days,
+  if ($settings['current_status']['position'] !== 'hide') {
+    // Generate HTML for CurrentStatus. Visibility is switched in js, otherwise the output might be wrong with static caching.
+    $context_id_array = entity_extract_ids($vars['context']['entity_type'], $vars['context']['entity']);
+    $context_id = implode('-', $context_id_array);
+    $html_current_status = '<div class="oh-current-wrapper" data-oh-current-context_id="' . $context_id . '">';
+    $html_current_status .= '<div class="oh-current-open element-invisible">' . $settings['current_status']['open_text'] . '</div>';
+    $html_current_status .= '<div class="oh-current-closed element-invisible">' . $settings['current_status']['closed_text'] . '</div>';
+    $html_current_status .= '</div>';
+    drupal_add_js(array(
+      'office_hours' => array (
+        'instances' => array (
+          $context_id => array (
+            'days' => $days,
+          )
         )
-      )
-    ),
-  ), 'setting');
+      ),
+    ), 'setting');
 
-  switch ($settings['current_status']['position']) {
-    case 'before':
-      $html = $html_current_status . $html_hours;
-      break;
+    switch ($settings['current_status']['position']) {
+      case 'before':
+        $html = $html_current_status . $html_hours;
+        break;
 
-    case 'after':
-      $html = $html_hours . $html_current_status;
-      break;
-
-    case 'hide':
-    default: // Not shown.
-      $html = $html_hours;
-      break;
+      case 'after':
+        $html = $html_hours . $html_current_status;
+        break;
+    }
   }
 
   return $html;
