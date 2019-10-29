@@ -109,7 +109,7 @@ function theme_office_hours_field_formatter_default($vars) {
                . ($info['current'] ? ' oh-display-current' : '')
                . '">'
                . filter_xss_admin($info['output_times'] . $settings['separator_days'])
-               . '</span> </div>'
+               . '</div>'
                . '</span>';
   }
 
