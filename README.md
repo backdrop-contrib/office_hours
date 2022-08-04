@@ -133,8 +133,8 @@ Bugs and feature requests should be reported in the
 
 - Ported to Backdrop CMS by [Justin Keiser](https://github.com/keiserjb).
 - Many thanks to the creators of the [Drupal project](https://www.drupal.org/project/office_hours).
-- Created for Drupal by [Max Pogonowski](https://www.drupal.org/u/darvanen) and
-           [Simon Perdrisat](https://www.drupal.org/u/gagarine).
+- Created for Drupal by (https://www.drupal.org/u/ozeuss) and
+           (https://www.drupal.org/u/johnv).
 
 ## License
 
