@@ -1,12 +1,12 @@
+# Office Hours
+
+### Status of all the features in the module port are unknown.  It is under active development.
+
 Office Hours creates a Field, that you can add to any entity (like a location,
 a restaurant or a user) to represent "office hours" or "opening hours".
 
-== UPGRADE WARNING ==
-You MUST run update.php, when you upgrade from version 1.1 (or lower)
-to a -dev version or version 1.2 (when available).
-
-== GENERAL FEATURES ==
-The Drupal 7 version now provides the following features: 
+## General Features
+The Backdrop version now provides the following features: 
 - Feeds module support to import data. (See below for details.)
 
 The widget provides:
@@ -31,14 +31,14 @@ or
 - Select the 'Office hours' formatter;
 - Check the formatter settings of the field;
 
-== FORMATTING THE HOURS ==
+## Formatting the Hours
 Using the customizable separators in the formatter settings, you can format the hours any way you want. 
 - The formatter is default set up to show a nice table.
 - To export the data to a Google Places bulk upload file, you can create a view,
   and set the formatter to generate the following data (for a shop that opens from Monday to Friday): 
     2:10:00:18:00,3:10:00:18:00,4:10:00:18:00,5:10:00:18:00,6:10:00:18:00,7:12:00:20:00
 
-== USING VIEWS - FIELDS ==
+## Using Views - Fields
 Add the Field to any Views display, as you are used to do.
 - To show only 1 day per row in a Views display: 
   - add the field to your View,
@@ -46,7 +46,7 @@ Add the Field to any Views display, as you are used to do.
   - UNcheck the option 'Display all values in the same row',
   - make also sure you display 'all' values. (only valid if you have upgraded from 1.1 version.)
 
-== USING VIEWS - FILTER CRITERIA ==
+## Using Views - Filter Criteria
 Only default (out-of-the-box) Views functionality is provided.
 - To show only the entities that have a office hours: 
   - add the filter criterion "Content: Office hours (field_office_hours:day)" to your View,
@@ -58,11 +58,11 @@ Only default (out-of-the-box) Views functionality is provided.
 - To show only the entities that are open NOW: 
   This is not possible, yet. 
 
-== USING VIEWS - SORT CRITERIA ==
+## Using Views - Sort Criteria
 Only default (out-of-the-box) Views functionality is provided.
 - To sort the times per day, add the 'day' sort criterion. 
 
-== USING VIEWS - CREATE A BLOCK PER NODE/ENTITY ==
+## Using Views - Create a block per node/entity
 Suppose you want to show the Office hours on a node page, but NOT on the page itself, 
 but rather in a separate block, follow these instructions:
 (If you use non-Node Content types/Entities, you'll need to adapt some settings.)
@@ -96,8 +96,7 @@ Now, test your node page. You'll see the Office hours in the page AND in the blo
  - Select the Office_hours, and set the Format to 'Hidden';
  - Save the data, end enjoy the result!
 
-
-== IMPORTING WITH FEEDS MODULE ==
+## Importing with the Feeds Module
 To import data with the Feeds module, the following columns can be used:
 - day;
 - hours/morehours from;
@@ -115,3 +114,28 @@ nid;weekday;Hours_1;Hours_2
 2345;tuesday;10:00 - 12:00;13:15-17.45
 2383;monday;11:00 - 18:01;
 2383;tuesday;10:00 - 12:00;13:15-17.45
+
+## Installation
+
+- Install this module using the official
+  [Backdrop CMS instructions](https://backdropcms.org/user-guide/modules).
+
+## Issues
+
+Bugs and feature requests should be reported in the
+[Issue Queue](https://github.com/backdrop-contrib/office_hours/issues).
+
+## Current Maintainer
+
+[Justin Keiser](https://github.com/keiserjb)
+
+## Credits
+
+- Ported to Backdrop CMS by [Justin Keiser](https://github.com/keiserjb).
+- Many thanks to the creators of the [Drupal project](https://www.drupal.org/project/office_hours).
+- Created for Drupal by [Max Pogonowski](https://www.drupal.org/u/darvanen) and
+           [Simon Perdrisat](https://www.drupal.org/u/gagarine).
+
+## License
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.
