@@ -46,7 +46,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
     }
     $element['#value']['starthours'] = '';
     $element['#value']['endhours'] = '';
-    // The following class is the trigger for js to hide the row. 
+    // The following class is the trigger for js to hide the row.
     $element['#prefix'] .= "<div class='oh-hide'>";
     $element['#suffix'] .= '</div>';
   }
@@ -96,7 +96,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
   );
   $element['comment'] = array(
     '#type' => $has_comment ? 'textfield' : 'hidden',
-    '#prefix' => $has_comment ? t('Comment') . ' ' : '',
+    '#prefix' => $has_comment?t('Comment') . ' ' : '',
     '#default_value' => isset($element['#value']['comment']) ? $element['#value']['comment'] : NULL,
     '#size' => 25,
     '#maxlength' => 255,
@@ -110,7 +110,7 @@ function _office_hours_block_process($element, &$form_state, $form) {
  *
  * Takes the #default_value and dissects it in hours, minutes and ampm indicator.
  */
-function _office_hours_select_value_callback($element, $input = FALSE, &$form_state) {
+function _office_hours_select_value_callback($element, $input, &$form_state) {
   return _office_hours_field_widget_time_parse($element['#default_value'], $element['#field_settings']['hoursformat']);
 }
 
@@ -194,7 +194,7 @@ function _office_hours_select_validate($element, &$form_state) {
  * which is set in _office_hours_select_validate().
  */
 function _office_hours_block_validate($element, &$form_state) {
-  $item = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
+  $item = backdrop_array_get_nested_value($form_state['values'], $element['#parents']);
 
   $error_text = '';
   $valhrs = $element['#field_settings']['valhrs'];
@@ -222,9 +222,9 @@ function _office_hours_block_validate($element, &$form_state) {
       . ': '
       . t($error_text,
         array(
-          '!start' => _office_hours_time_to_24hr($limitstart),
-          '!end' => _office_hours_time_to_24hr($limitend),
-        ),
+      '!start' => _office_hours_time_to_24hr($limitstart),
+      '!end' => _office_hours_time_to_24hr($limitend),
+    ),
         array('context' => 'office_hours')
       );
     form_error($element, check_plain($error_text));

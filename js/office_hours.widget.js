@@ -3,7 +3,7 @@
   /**
    * Add some links for better UX, like copy time slots.
    */
-  Drupal.behaviors.office_hours_block = {
+  Backdrop.behaviors.office_hours_block = {
     attach: function (context, settings) {
 
       // Hide every item above the max blocks per day.

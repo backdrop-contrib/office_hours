@@ -5,7 +5,7 @@
  */
 
 /**
- * Implements hook_feeds_processor_targets_alter().
+ * Implements hook_feeds_processor_targets_alter().().
  *
  * @see \Feeds\FeedsNodeProcessor::getMappingTargets()
  */
@@ -17,7 +17,7 @@ function office_hours_feeds_processor_targets_alter(&$targets, $entity_type, $bu
       $targets[$name . ':day'] = array(
         'name' => $instance['label'] . ': Day',
         'callback' => 'office_hours_feeds_set_target',
-        'description' => t('The day for the @name field.',
+        'description' => t('The day for the @name field.', 
           array('@name' => $instance['label'])),
         'real_target' => $name,
       );
@@ -25,14 +25,14 @@ function office_hours_feeds_processor_targets_alter(&$targets, $entity_type, $bu
       $targets[$name . ':hours'] = array(
         'name' => $instance['label'] . ': Hours',
         'callback' => 'office_hours_feeds_set_target',
-        'description' => t('The first set of hours for the @name field, if using start and end in 1 field.',
+        'description' => t('The first set of hours for the @name field, if using start and end in 1 field.', 
           array('@name' => $instance['label'])),
         'real_target' => $name,
       );
       $targets[$name . ':morehours'] = array(
         'name' => $instance['label'] . ': More hours',
         'callback' => 'office_hours_feeds_set_target',
-        'description' => t('The second set of hours for the @name field, if using start and end in 1 field.',
+        'description' => t('The second set of hours for the @name field, if using start and end in 1 field.', 
           array('@name' => $instance['label'])),
         'real_target' => $name,
       );
@@ -40,7 +40,7 @@ function office_hours_feeds_processor_targets_alter(&$targets, $entity_type, $bu
       $targets[$name . ':hours:start'] = array(
         'name' => $instance['label'] . ': Hours start',
         'callback' => 'office_hours_feeds_set_target',
-        'description' => t('The start date for the @name field. Also use if mapping both start and end.',
+        'description' => t('The start date for the @name field. Also use if mapping both start and end.', 
           array('@name' => $instance['label'])),
         'real_target' => $name,
       );
@@ -54,7 +54,7 @@ function office_hours_feeds_processor_targets_alter(&$targets, $entity_type, $bu
       $targets[$name . ':morehours:start'] = array(
         'name' => $instance['label'] . ': More hours start',
         'callback' => 'office_hours_feeds_set_target',
-        'description' => t('The start date for the @name field. Also use if mapping both start and end.',
+        'description' => t('The start date for the @name field. Also use if mapping both start and end.', 
           array('@name' => $instance['label'])),
         'real_target' => $name,
       );
@@ -69,7 +69,7 @@ function office_hours_feeds_processor_targets_alter(&$targets, $entity_type, $bu
 }
 
 /**
- * Implements hook_feeds_set_target().
+ * Implements hook_feeds_set_target().().
  */
 function office_hours_feeds_set_target($source, $entity, $target, $feed_element) {
   // Remember current Entity ID, Field name and day number.
